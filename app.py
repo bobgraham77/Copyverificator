@@ -106,6 +106,21 @@ def get_score_color(score):
     else:
         return "#dc3545"  # Red
 
+# Function to get improvement summary
+def get_improvement_summary(scores):
+    """Get a summary of the main areas for improvement"""
+    # Sort scores by value to find lowest scores
+    sorted_scores = sorted(scores.items(), key=lambda x: x[1])
+    lowest_scores = sorted_scores[:3]  # Get 3 lowest scores
+    
+    if lowest_scores[0][1] < 5:
+        urgency = "urgent"
+    else:
+        urgency = "important"
+    
+    areas = ", ".join([f"{area}" for area, score in lowest_scores])
+    return f"The {urgency} areas for improvement are: {areas}. Focus on these aspects to significantly enhance your copy's effectiveness."
+
 # Function to display score bar
 def display_score_bar(score, title, suggestions):
     color = get_score_color(score)
@@ -354,6 +369,62 @@ def extract_article_content(url):
         print(f"Error extracting content: {str(e)}")
         return None
 
+# Function to display results
+def display_results(scores, suggestions, final_comment):
+    # Calculate total score
+    total_score = sum(scores.values())
+    
+    # Create columns for layout
+    col1, col2 = st.columns([1, 3])
+    
+    # Display circular score in first column
+    with col1:
+        # Reduce the size of the circular graph
+        st.markdown(
+            f'''
+            <div class="score-circle" style="width: 120px; height: 120px;">
+                <svg viewBox="0 0 36 36">
+                    <path d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="#eee"
+                        stroke-width="3"
+                        stroke-dasharray="100, 100"/>
+                    <path d="M18 2.0845
+                        a 15.9155 15.9155 0 0 1 0 31.831
+                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none"
+                        stroke="{get_score_color(total_score)}"
+                        stroke-width="3"
+                        stroke-dasharray="{total_score}, 100"/>
+                    <text x="18" y="20.35" 
+                        font-family="Verdana" 
+                        font-size="8" 
+                        fill="{get_score_color(total_score)}"
+                        text-anchor="middle">
+                        {total_score}%
+                    </text>
+                </svg>
+            </div>
+            ''',
+            unsafe_allow_html=True
+        )
+    
+    # Display detailed scores and suggestions in second column
+    with col2:
+        for criterion, score in scores.items():
+            with st.expander(f"{criterion}: {score}/10"):
+                st.write(suggestions[criterion])
+    
+    # Display improvement summary
+    st.markdown("### Areas for Improvement")
+    st.write(get_improvement_summary(scores))
+    
+    # Display final comment
+    st.markdown("### Overall Assessment")
+    st.write(final_comment)
+
 # Streamlit app layout
 st.set_page_config(
     page_title="Copycheck",
@@ -432,55 +503,22 @@ if st.button('Analyze', type='primary'):
                 if not scores:
                     st.error("Sorry, there was an error analyzing your text. Please try again.")
                 else:
-                    # Calculate average score for overall progress
-                    average_score = sum(scores.values()) / len(scores) if scores else 0
+                    # Calculate total score and get final comment
+                    total_score = sum(scores.values())
+                    final_comment = get_final_comment(total_score)
                     
-                    # Display overall score with improved styling
-                    st.markdown('<div class="overall-score">', unsafe_allow_html=True)
-                    st.markdown("### Overall Score")
+                    # Display results using the new function
+                    display_results(scores, suggestions, final_comment)
                     
-                    # Create circular progress indicator
-                    fig, ax = plt.subplots(figsize=(4, 4))
-                    circle = plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6')
-                    score_circle = plt.Circle((0.5, 0.5), 0.4, 
-                                           color=get_score_color(average_score),
-                                           alpha=0.8)
-                    
-                    ax.add_patch(circle)
-                    ax.add_patch(score_circle)
-                    ax.text(0.5, 0.5, f'{average_score:.1f}', 
-                           ha='center', va='center',
-                           fontsize=40, fontweight='bold',
-                           color='#1f1f1f')
-                    ax.text(0.5, 0.3, '/10', 
-                           ha='center', va='center',
-                           fontsize=20, color='#666666')
-                    
-                    ax.set_xlim(0, 1)
-                    ax.set_ylim(0, 1)
-                    ax.axis('off')
-                    
-                    # Display the overall score circle
-                    st.pyplot(fig, clear_figure=True)
-                    plt.close()
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    
-                    # Display individual scores
-                    st.markdown("### Detailed Analysis")
-                    for title, score in scores.items():
-                        display_score_bar(score, title, suggestions[title])
-                    
-                    # Get and display final comment
-                    final_comment = get_final_comment(average_score)
-                    st.markdown(f"### Overall Assessment\n{final_comment}")
-                    
-                    # Generate PDF report
-                    pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
-                    
-                    # Send PDF via email
-                    if send_pdf_email(email, pdf_content, scores):
-                        st.success('Analysis complete! Check your email for the detailed report.')
-                    else:
-                        st.error('There was an issue sending the email. Please try again.')
+                    # Generate and send PDF report
+                    try:
+                        with st.spinner('Generating and sending PDF report...'):
+                            pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
+                            if send_pdf_email(email, pdf_content, scores):
+                                st.success('Analysis complete! Check your email for the detailed report.')
+                            else:
+                                st.error('There was an issue sending the email. Please try again.')
+                    except Exception as e:
+                        st.error(f'Error sending email: {str(e)}')
     else:
         st.warning('Please enter some text to analyze.')
