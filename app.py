@@ -41,56 +41,24 @@ def truncate_text(text, max_words=1000):
 # Function to analyze text based on copywriting criteria
 def analyze_text(text):
     """Analyze text based on copywriting criteria"""
-    # Truncate text if too long
-    text = truncate_text(text)
-    
     completion = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
         messages=[
             {
                 "role": "system",
-                "content": """You are a professional copywriting analyzer. Evaluate the text on a scale of 100 points based on these 10 criteria, where each is worth 10 points. Return a JSON response with exactly these keys:
-                {
-                    "scores": {
-                        "Empathy": 0-10 score for understanding the audience,
-                        "Clarity": 0-10 score for clear and concise message,
-                        "Attention": 0-10 score for powerful headlines/hooks,
-                        "Flow": 0-10 score for logical structure,
-                        "Benefits": 0-10 score for focus on benefits,
-                        "Action": 0-10 score for strong call to action,
-                        "Trust": 0-10 score for credibility and authority,
-                        "Emotion": 0-10 score for storytelling,
-                        "Adaptation": 0-10 score for medium optimization,
-                        "Influence": 0-10 score for persuasion
-                    },
-                    "suggestions": {
-                        "Empathy": "Detailed explanation of score and suggestions for improving audience understanding",
-                        "Clarity": "Detailed explanation of score and suggestions for improving message clarity",
-                        "Attention": "Detailed explanation of score and suggestions for improving headlines/hooks",
-                        "Flow": "Detailed explanation of score and suggestions for improving structure",
-                        "Benefits": "Detailed explanation of score and suggestions for improving benefit focus",
-                        "Action": "Detailed explanation of score and suggestions for improving call-to-action",
-                        "Trust": "Detailed explanation of score and suggestions for improving credibility",
-                        "Emotion": "Detailed explanation of score and suggestions for improving storytelling",
-                        "Adaptation": "Detailed explanation of score and suggestions for improving medium optimization",
-                        "Influence": "Detailed explanation of score and suggestions for improving persuasion"
-                    }
-                }
-                
-                Be extremely consistent with scoring. For the same text, always give exactly the same scores.
-                Never deviate from your initial assessment.
-                Be precise and methodical in your scoring approach.
-                Use objective criteria whenever possible.
-                Keep explanations and improvements concise but complete.
-                Note: If the text has been truncated, focus on analyzing the available portion."""
+                "content": "Evaluate the submitted article on a scale of 100 points by taking into account the following 10 copywriting criteria, where each criterion is worth 10 points. Explain for each criterion why you assigned the score given and propose improvements for better copywriting.\nUnderstanding the audience: Empathy\nClear and concise message: Clarity\nPowerful headlines/hooks: Attention\nLogical structure: Flow\nFocus on benefits: Benefits\nStrong call to action: Action\nCredibility and authority: Trust\nStorytelling: Emotion\nOptimized for the medium: Adaptation\nPersuasion: Influence\nSteps\nRead the article carefully to get an overall understanding of its content and purpose.\nEvaluate Each Criterion:\nFor each of the 10 criteria, assess how well the article performs.\nConsider specific examples from the article that support your evaluation.\nProvide Scores: Assign a score out of 10 for each criterion.\nExplain the Scores: For each criterion, explain why you gave that score with specific details.\nSuggest Improvements: Offer constructive feedback on how to improve the article in each criterion area.\nOutput Format\nYour output should be structured with headings for each criterion followed by:\nScore: The score out of 10\nReasoning: Detailed explanation of why this score was given\nImprovements: Suggestions for enhancing the copywriting based on the current evaluation\nBe extremely consistent with your scoring. For the same text, you should always give exactly the same scores.\nNever deviate from your initial assessment of a piece of text.\nBe precise and methodical in your scoring approach.\nUse objective criteria whenever possible.\nKeep explanations and improvements concise but complete."
             },
             {
                 "role": "user",
                 "content": text
             }
         ],
-        model="mixtral-8x7b-32768",
-        temperature=0.5,
-        max_tokens=1000,
+        temperature=0.1,
+        max_tokens=2048,
+        top_p=1,
+        stream=True,
+        stop=None,
+        seed=42
     )
     
     return completion.choices[0].message.content
@@ -125,19 +93,27 @@ def get_improvement_summary(scores):
 def display_score_bar(score, title, suggestions):
     color = get_score_color(score)
     
-    # Create a container for the score bar
-    container = st.container()
-    with container:
-        # Display the score bar and title
-        col1, col2 = st.columns([8, 2])
-        with col1:
-            st.progress(score / 10)
-        with col2:
-            st.markdown(f"<p style='text-align: right; color: {color};'>{score}/10</p>", unsafe_allow_html=True)
-        
-        # Display the title and suggestions
-        st.markdown(f"**{title}**")
-        st.markdown(suggestions)
+    # Create columns for layout
+    col1, col2 = st.columns([1, 4])
+    
+    with col1:
+        # Create circular progress indicator
+        fig, ax = plt.subplots(figsize=(2, 2))
+        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6'))
+        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=color, 
+                              alpha=score/10))
+        ax.text(0.5, 0.5, f'{score}', ha='center', va='center', 
+               fontsize=20, fontweight='bold')
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis('off')
+        st.pyplot(fig)
+        plt.close()
+    
+    with col2:
+        st.markdown(f"### {title}")
+        st.progress(score/10, text=f"{score}/10")
+        st.markdown(f"_{suggestions}_")
 
 # Function to create PDF report
 def create_pdf_report(text, scores, suggestions, final_comment):
@@ -443,54 +419,56 @@ if st.button('Analyze', type='primary'):
                     average_score = sum(scores.values()) / len(scores) if scores else 0
                     
                     # Display overall score with improved styling
-                    st.markdown('<div class="overall-score">', unsafe_allow_html=True)
-                    st.markdown("### Overall Score")
+                    col1, col2 = st.columns([1, 3])
                     
-                    # Create smaller circular progress indicator
-                    st.markdown(
-                        f'''
-                        <div class="score-circle" style="width: 120px; height: 120px;">
-                            <svg viewBox="0 0 36 36">
-                                <path d="M18 2.0845
-                                    a 15.9155 15.9155 0 0 1 0 31.831
-                                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none"
-                                    stroke="#eee"
-                                    stroke-width="3"
-                                    stroke-dasharray="100, 100"/>
-                                <path d="M18 2.0845
-                                    a 15.9155 15.9155 0 0 1 0 31.831
-                                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none"
-                                    stroke="{get_score_color(average_score * 10)}"
-                                    stroke-width="3"
-                                    stroke-dasharray="{average_score * 10}, 100"/>
-                                <text x="18" y="20.35" 
-                                    font-family="Verdana" 
-                                    font-size="8" 
-                                    fill="{get_score_color(average_score * 10)}"
-                                    text-anchor="middle">
-                                    {average_score:.1f}/10
-                                </text>
-                            </svg>
-                        </div>
-                        ''',
-                        unsafe_allow_html=True
-                    )
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    with col1:
+                        st.markdown("### Overall Score")
+                        # Create smaller circular progress indicator
+                        st.markdown(
+                            f'''
+                            <div class="score-circle" style="width: 120px; height: 120px;">
+                                <svg viewBox="0 0 36 36">
+                                    <path d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none"
+                                        stroke="#eee"
+                                        stroke-width="3"
+                                        stroke-dasharray="100, 100"/>
+                                    <path d="M18 2.0845
+                                        a 15.9155 15.9155 0 0 1 0 31.831
+                                        a 15.9155 15.9155 0 0 1 0 -31.831"
+                                        fill="none"
+                                        stroke="{get_score_color(average_score * 10)}"
+                                        stroke-width="3"
+                                        stroke-dasharray="{average_score * 10}, 100"/>
+                                    <text x="18" y="20.35" 
+                                        font-family="Verdana" 
+                                        font-size="8" 
+                                        fill="{get_score_color(average_score * 10)}"
+                                        text-anchor="middle">
+                                        {average_score:.1f}/10
+                                    </text>
+                                </svg>
+                            </div>
+                            ''',
+                            unsafe_allow_html=True
+                        )
                     
-                    # Display individual scores with bars
-                    st.markdown("### Detailed Analysis")
-                    for title, score in scores.items():
-                        display_score_bar(score, title, suggestions[title])
+                    with col2:
+                        # Get and display final comment
+                        final_comment = get_final_comment(average_score)
+                        st.markdown("### Overall Assessment")
+                        st.write(final_comment)
                     
                     # Display improvement summary
                     st.markdown("### Areas for Improvement")
                     st.write(get_improvement_summary(scores))
                     
-                    # Get and display final comment
-                    final_comment = get_final_comment(average_score)
-                    st.markdown(f"### Overall Assessment\n{final_comment}")
+                    # Display individual scores with bars
+                    st.markdown("### Detailed Analysis")
+                    for title, score in scores.items():
+                        display_score_bar(score, title, suggestions[title])
                     
                     # Generate and send PDF report
                     try:
