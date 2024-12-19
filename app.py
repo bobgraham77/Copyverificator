@@ -203,10 +203,13 @@ if st.button('Analyze'):
                 # Generate PDF report
                 pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
                 
+                # Convert bytearray to bytes for download
+                pdf_bytes = bytes(pdf_content)
+                
                 # Use Streamlit's native download button
                 st.download_button(
                     label="📥 Download Analysis Report (PDF)",
-                    data=pdf_content,
+                    data=pdf_bytes,
                     file_name="copywriting_analysis.pdf",
                     mime="application/pdf",
                 )
