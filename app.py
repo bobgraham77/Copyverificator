@@ -14,6 +14,7 @@ import resend
 groq_api_key = st.secrets["groq"]["api_key"]
 resend.api_key = st.secrets["resend"]["api_key"]
 sender_email = st.secrets["resend"]["sender_email"]
+audience_id = st.secrets["resend"]["audience_id"]
 
 # Initialize Groq client
 groq_client = Groq(api_key=groq_api_key)
@@ -167,10 +168,36 @@ def create_pdf_report(text, scores, suggestions, final_comment):
     
     return pdf.output(dest='S')
 
+# Function to add to audience
+def add_to_audience(email):
+    """Add email to Copycheck audience in Resend"""
+    try:
+        # Make a POST request to Resend's Audiences API
+        response = resend.Audiences.add_contacts(
+            audience_id=audience_id,  # Get audience ID from secrets
+            contacts=[{
+                "email": email,
+                "first_name": "",  # Optional
+                "last_name": "",   # Optional
+                "data": {          # Optional custom data
+                    "source": "copycheck_app",
+                    "signup_date": datetime.now().isoformat()
+                }
+            }]
+        )
+        print(f"Added to audience response: {response}")
+        return True
+    except Exception as e:
+        print(f"Error adding to audience: {e}")
+        return False
+
 # Function to send PDF email
 def send_pdf_email(email, pdf_content, scores):
     """Send PDF report via email using Resend"""
     try:
+        # First, add to audience
+        add_to_audience(email)
+        
         # Encode PDF in base64
         encoded_pdf = base64.b64encode(pdf_content).decode()
         
