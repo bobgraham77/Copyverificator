@@ -151,32 +151,6 @@ def create_pdf_report(text, scores, suggestions, final_comment):
     
     return pdf.output(dest='S')
 
-# Function to generate download button
-def download_button(binary_content, filename):
-    b64 = base64.b64encode(binary_content).decode()
-    return f'''
-        <a href="data:application/pdf;base64,{b64}" 
-           download="{filename}"
-           style="
-                display: inline-block;
-                padding: 0.5em 1em;
-                color: white;
-                background-color: #0066cc;
-                border-radius: 4px;
-                text-decoration: none;
-                font-weight: bold;
-                margin: 10px 0;
-                border: none;
-                cursor: pointer;
-                transition: background-color 0.3s ease;
-           "
-           onmouseover="this.style.backgroundColor='#0052a3'"
-           onmouseout="this.style.backgroundColor='#0066cc'"
-        >
-            📥 Download Analysis Report (PDF)
-        </a>
-    '''
-
 # Streamlit app layout
 col1, col2 = st.columns([1, 4])
 
@@ -192,16 +166,7 @@ st.markdown("""
         background-color: #0066cc;
         color: white;
     }
-    .download-btn {
-        display: inline-block;
-        padding: 0.5em 1em;
-        background-color: #0066cc;
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        margin: 10px 0;
-    }
-    .download-btn:hover {
+    .stButton>button:hover {
         background-color: #0052a3;
         color: white;
     }
@@ -237,10 +202,17 @@ if st.button('Analyze'):
                 
                 # Generate PDF report
                 pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
-                st.markdown(download_button(pdf_content, "copywriting_analysis.pdf"), unsafe_allow_html=True)
+                
+                # Use Streamlit's native download button
+                st.download_button(
+                    label="📥 Download Analysis Report (PDF)",
+                    data=pdf_content,
+                    file_name="copywriting_analysis.pdf",
+                    mime="application/pdf",
+                )
                 
                 # Success message
-                st.success('Analysis complete! Download your detailed report above.')
+                st.success('Analysis complete! Click the button above to download your detailed report.')
                 
                 # Store email (you might want to add this to a database in the future)
                 st.session_state['user_email'] = email
