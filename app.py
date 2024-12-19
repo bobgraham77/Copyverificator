@@ -18,19 +18,32 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Load API keys from Streamlit secrets
-groq_api_key = st.secrets["groq"]["api_key"]
-resend_api_key = st.secrets["resend"]["api_key"]
-sender_email = st.secrets["resend"]["sender_email"]
-audience_id = st.secrets["resend"]["audience_id"]
+try:
+    groq_api_key = st.secrets["groq"]["api_key"]
+    if not groq_api_key or groq_api_key.isspace():
+        raise ValueError("Groq API key is empty")
+    resend_api_key = st.secrets["resend"]["api_key"]
+    sender_email = st.secrets["resend"]["sender_email"]
+    audience_id = st.secrets["resend"]["audience_id"]
+except Exception as e:
+    st.error("Erreur de configuration : Vérifiez que le fichier secrets.toml contient toutes les clés API nécessaires.")
+    logging.error(f"Configuration error: {str(e)}")
+    st.stop()
 
 # Initialize Groq client
-groq_client = Groq(api_key=groq_api_key)
+try:
+    groq_client = Groq(api_key=groq_api_key)
+except Exception as e:
+    st.error("Erreur d'initialisation de l'API Groq. Veuillez vérifier votre clé API.")
+    logging.error(f"Groq client initialization error: {str(e)}")
+    st.stop()
 
 # Function to analyze text based on copywriting criteria
 def analyze_text(text):
     """Analyze text based on copywriting criteria"""
     try:
         logging.debug("Starting analysis...")
+        logging.debug(f"Text length: {len(text)} characters")
         
         # Truncate text if it's too long
         max_text_length = 12000
@@ -38,38 +51,48 @@ def analyze_text(text):
             text = text[:max_text_length] + "..."
             logging.warning(f"Text truncated to {max_text_length} characters")
         
+        logging.debug("Preparing API call to Groq...")
+        logging.debug(f"Using API key: {groq_api_key[:4]}{'*' * (len(groq_api_key)-8)}{groq_api_key[-4:]}")
+        
         # Use non-streaming API call
-        completion = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Evaluate the article on 10 copywriting criteria (10 points each):\n1. Empathy (audience understanding)\n2. Clarity (clear message)\n3. Attention (headlines/hooks)\n4. Flow (structure)\n5. Benefits (value focus)\n6. Action (call-to-action)\n7. Trust (credibility)\n8. Emotion (storytelling)\n9. Adaptation (medium fit)\n10. Influence (persuasion)\n\nFor each criterion provide:\nScore: X/10\nReasoning: Brief explanation\nImprovement: One key suggestion"
-                },
-                {
-                    "role": "user",
-                    "content": text
-                }
-            ],
-            temperature=0.1,
-            max_tokens=2048,
-            top_p=1,
-            stream=False,
-            stop=None,
-            seed=42
-        )
+        try:
+            completion = groq_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Evaluate the article on 10 copywriting criteria (10 points each):\n1. Empathy (audience understanding)\n2. Clarity (clear message)\n3. Attention (headlines/hooks)\n4. Flow (structure)\n5. Benefits (value focus)\n6. Action (call-to-action)\n7. Trust (credibility)\n8. Emotion (storytelling)\n9. Adaptation (medium fit)\n10. Influence (persuasion)\n\nFor each criterion provide:\nScore: X/10\nReasoning: Brief explanation\nImprovement: One key suggestion"
+                    },
+                    {
+                        "role": "user",
+                        "content": text
+                    }
+                ],
+                temperature=0.1,
+                max_tokens=2048,
+                top_p=1,
+                stream=False,
+                stop=None,
+                seed=42
+            )
+            logging.debug("API call successful")
+        except Exception as api_error:
+            logging.error(f"API call failed: {str(api_error)}")
+            raise Exception(f"Erreur lors de l'appel à l'API Groq: {str(api_error)}")
         
         response = completion.choices[0].message.content
         logging.debug("Analysis complete")
+        logging.debug(f"Response length: {len(response)} characters")
         
         if not response or not response.strip():
-            raise Exception("Empty response received from API")
+            raise Exception("Réponse vide reçue de l'API")
             
         return response
             
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        st.error("Une erreur s'est produite lors de l'analyse. Veuillez réessayer ou contacter le support si le problème persiste.")
+        error_msg = str(e) if "Erreur lors de l'appel à l'API Groq" in str(e) else "Une erreur s'est produite lors de l'analyse. Veuillez réessayer ou contacter le support si le problème persiste."
+        st.error(error_msg)
         return None
 
 # Function to get score color
