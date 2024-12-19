@@ -104,7 +104,7 @@ def get_final_comment(score):
 col1, col2 = st.columns([1, 4])
 
 with col1:
-    st.image("https://img.icons8.com/color/96/000000/copywriting.png", width=100)
+    st.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", width=100)
 with col2:
     st.title('Copywriting Impact Checker')
 
