@@ -140,7 +140,7 @@ def create_pdf_report(text, scores, suggestions, final_comment):
     pdf.set_font("Arial", "", 12)
     pdf.multi_cell(0, 10, final_comment)
     
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='S')
 
 # Function to generate download button
 def download_button(binary_content, filename):
