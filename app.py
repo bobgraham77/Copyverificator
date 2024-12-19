@@ -1,14 +1,12 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
-import toml
 from groq import Groq
 import re
 import time
 
-# Load API key from secrets.toml
-secrets = toml.load('secrets.toml')
-api_key = secrets['groq']['api_key']
+# Load API key from Streamlit secrets
+api_key = st.secrets["groq"]["api_key"]
 
 client = Groq(api_key=api_key)
 
