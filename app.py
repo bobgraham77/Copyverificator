@@ -100,6 +100,7 @@ def analyze_text(text):
 
 # Function to get score color
 def get_score_color(score):
+    """Get color based on score value"""
     if score >= 8:
         return "#28a745"  # Green
     elif score >= 6:
@@ -126,6 +127,7 @@ def get_improvement_summary(scores):
 
 # Function to display score bar
 def display_score_bar(score, title, suggestions):
+    """Display a criterion score with a circular progress indicator"""
     color = get_score_color(score)
     
     # Create columns for layout
@@ -137,8 +139,8 @@ def display_score_bar(score, title, suggestions):
         ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6'))
         ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=color, 
                               alpha=score/10))
-        ax.text(0.5, 0.5, f'{score}', ha='center', va='center', 
-               fontsize=20, fontweight='bold')
+        ax.text(0.5, 0.5, f'{int(score*10)}%', ha='center', va='center', 
+               fontsize=16, fontweight='bold')
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.axis('off')
@@ -147,7 +149,7 @@ def display_score_bar(score, title, suggestions):
     
     with col2:
         st.markdown(f"### {title}")
-        st.progress(score/10, text=f"{score}/10")
+        st.progress(score/10)
         st.markdown(f"_{suggestions}_")
 
 # Function to create PDF report
@@ -161,9 +163,9 @@ def create_pdf_report(text, scores, suggestions, final_comment):
         # Set default font
         pdf.set_font('helvetica', size=12)
         
-        # Add title
+        # Add title with pen emoji
         pdf.set_font('helvetica', 'B', 24)
-        pdf.cell(0, 20, 'Copycheck Analysis Report', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 20, '✍️ Copycheck Analysis Report', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(10)
         
         # Add date
@@ -188,24 +190,24 @@ def create_pdf_report(text, scores, suggestions, final_comment):
         average_score = sum(scores.values()) / len(scores) if scores else 0
         
         pdf.set_font('helvetica', 'B', 12)
-        pdf.cell(0, 10, f'Overall Score: {average_score:.1f}/10', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 10, f'Overall Score: {int(average_score*10)}%', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(10)
         
         for criterion, score in scores.items():
             pdf.set_font('helvetica', 'B', 12)
-            pdf.cell(0, 10, f'{criterion}: {score}/10', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(0, 10, f'{criterion}: {int(score*10)}%', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.set_font('helvetica', 'I', 12)
             if criterion in suggestions:
                 pdf.multi_cell(0, 10, f'Suggestion: {suggestions[criterion]}')
             pdf.ln(5)
         
-        # Add final comment
+        # Add areas for improvement
         pdf.ln(10)
         pdf.set_font('helvetica', 'B', 14)
-        pdf.cell(0, 10, 'Final Assessment:', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 10, 'Areas for Improvement:', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(5)
         pdf.set_font('helvetica', size=12)
-        pdf.multi_cell(0, 10, final_comment)
+        pdf.multi_cell(0, 10, get_improvement_summary(scores))
         
         return pdf.output()
     except Exception as e:
@@ -541,7 +543,7 @@ if st.button('Analyze', type='primary'):
                     with col2:
                         # Get and display final comment
                         final_comment = get_final_comment(average_score)
-                        st.markdown("### Overall Assessment")
+                        st.markdown("### Areas for Improvement")
                         st.write(final_comment)
                     
                     # Display improvement summary
