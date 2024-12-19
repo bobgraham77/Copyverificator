@@ -22,9 +22,27 @@ audience_id = st.secrets["resend"]["audience_id"]
 # Initialize Groq client
 groq_client = Groq(api_key=groq_api_key)
 
+# Function to truncate text
+def truncate_text(text, max_words=1000):
+    """Truncate text to a maximum number of words while preserving meaning"""
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+        
+    # Find a good breaking point (end of sentence) near max_words
+    truncated = ' '.join(words[:max_words])
+    last_period = truncated.rfind('.')
+    if last_period > 0:
+        truncated = truncated[:last_period + 1]
+    
+    return truncated
+
 # Function to analyze text based on copywriting criteria
 def analyze_text(text):
     """Analyze text based on copywriting criteria"""
+    # Truncate text if too long
+    text = truncate_text(text)
+    
     completion = groq_client.chat.completions.create(
         messages=[
             {
@@ -61,7 +79,8 @@ def analyze_text(text):
                 Never deviate from your initial assessment.
                 Be precise and methodical in your scoring approach.
                 Use objective criteria whenever possible.
-                Keep explanations and improvements concise but complete."""
+                Keep explanations and improvements concise but complete.
+                Note: If the text has been truncated, focus on analyzing the available portion."""
             },
             {
                 "role": "user",
@@ -393,6 +412,13 @@ if st.button('Analyze', type='primary'):
                     else:
                         st.error('Could not extract article content. Please try copying and pasting the text directly.')
                         st.stop()
+            
+            # Check if text needs to be truncated
+            original_length = len(user_input.split())
+            truncated_text = truncate_text(user_input)
+            if len(truncated_text) < len(user_input):
+                st.warning(f'The text has been truncated to the first {len(truncated_text.split())} words (out of {original_length}) for analysis due to length limitations. The analysis will focus on this portion.')
+                user_input = truncated_text
             
             with st.spinner('Analyzing your text...'):
                 analysis_result = analyze_text(user_input)
