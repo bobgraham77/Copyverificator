@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.copyverificator.changelog</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/bob-ordi/Desktop/Manual Library/Programmation/Copyverificator/update_changelog.py</string>
+    </array>
+    <key>RunAtLoad</key>
+    <false/>
+    <key>WatchPaths</key>
+    <array>
+        <string>/Users/bob-ordi/Desktop/Manual Library/Programmation/Copyverificator</string>
+    </array>
+    <key>ThrottleInterval</key>
+    <integer>5</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/bob-ordi/Desktop/Manual Library/Programmation/Copyverificator/changelog_watcher.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/bob-ordi/Desktop/Manual Library/Programmation/Copyverificator/changelog_watcher_error.log</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/bob-ordi/Desktop/Manual Library/Programmation/Copyverificator</string>
+</dict>
+</plist>
