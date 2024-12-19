@@ -248,6 +248,50 @@ def send_pdf_email(email, pdf_content, scores):
         print(f"Error preparing email: {e}")
         return False
 
+# Function to parse analysis result
+def parse_analysis_result(result):
+    """Parse the analysis result and extract scores and suggestions"""
+    try:
+        # Ensure we have a valid result
+        if not result or not isinstance(result, str):
+            return {}, {}
+            
+        # Try to find JSON in the response
+        json_match = re.search(r'\{.*\}', result, re.DOTALL)
+        if not json_match:
+            return {}, {}
+            
+        data = eval(json_match.group())
+        if not isinstance(data, dict):
+            return {}, {}
+            
+        scores = data.get('scores', {})
+        suggestions = data.get('suggestions', {})
+        
+        # Validate scores
+        if not scores or not all(isinstance(v, (int, float)) for v in scores.values()):
+            return {}, {}
+            
+        return scores, suggestions
+    except Exception as e:
+        print(f"Error parsing analysis result: {e}")
+        return {}, {}
+
+# Function to get final comment
+def get_final_comment(average_score):
+    """Get final assessment comment based on average score"""
+    if not isinstance(average_score, (int, float)) or average_score < 0:
+        return "Unable to calculate score. Please try again."
+        
+    if average_score >= 9:
+        return "Excellent! Your copy is highly effective and persuasive."
+    elif average_score >= 7:
+        return "Very good! Your copy is effective with some room for improvement."
+    elif average_score >= 5:
+        return "Good start. Your copy needs some work to be more effective."
+    else:
+        return "Your copy needs significant improvement. Consider implementing the suggestions above."
+
 # Streamlit app layout
 st.set_page_config(
     page_title="Copycheck",
@@ -361,45 +405,3 @@ if st.button('Analyze', type='primary'):
                         st.error('There was an issue sending the email. Please try again.')
     else:
         st.warning('Please enter some text to analyze.')
-
-def parse_analysis_result(result):
-    """Parse the analysis result and extract scores and suggestions"""
-    try:
-        # Ensure we have a valid result
-        if not result or not isinstance(result, str):
-            return {}, {}
-            
-        # Try to find JSON in the response
-        json_match = re.search(r'\{.*\}', result, re.DOTALL)
-        if not json_match:
-            return {}, {}
-            
-        data = eval(json_match.group())
-        if not isinstance(data, dict):
-            return {}, {}
-            
-        scores = data.get('scores', {})
-        suggestions = data.get('suggestions', {})
-        
-        # Validate scores
-        if not scores or not all(isinstance(v, (int, float)) for v in scores.values()):
-            return {}, {}
-            
-        return scores, suggestions
-    except Exception as e:
-        print(f"Error parsing analysis result: {e}")
-        return {}, {}
-
-def get_final_comment(average_score):
-    """Get final assessment comment based on average score"""
-    if not isinstance(average_score, (int, float)) or average_score < 0:
-        return "Unable to calculate score. Please try again."
-        
-    if average_score >= 9:
-        return "Excellent! Your copy is highly effective and persuasive."
-    elif average_score >= 7:
-        return "Very good! Your copy is effective with some room for improvement."
-    elif average_score >= 5:
-        return "Good start. Your copy needs some work to be more effective."
-    else:
-        return "Your copy needs significant improvement. Consider implementing the suggestions above."
