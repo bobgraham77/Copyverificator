@@ -3,6 +3,10 @@
 ## [Unreleased] - 2024-12-19
 
 ### Modified
+- Updated assets/copy_checker.svg
+## [Unreleased] - 2024-12-19
+
+### Modified
 - Updated .file_hashes.json
 - Updated CHANGELOG.md
 - Updated app.py
