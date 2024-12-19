@@ -11,6 +11,7 @@ from datetime import datetime
 import resend
 import requests
 import json
+from bs4 import BeautifulSoup
 
 # Load API keys from Streamlit secrets
 groq_api_key = st.secrets["groq"]["api_key"]
@@ -292,6 +293,44 @@ def get_final_comment(average_score):
     else:
         return "Your copy needs significant improvement. Consider implementing the suggestions above."
 
+# Function to extract article content from URL
+def extract_article_content(url):
+    """Extract article content from URL"""
+    try:
+        # Get the webpage content
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        # Parse HTML
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Remove unwanted elements
+        for element in soup.find_all(['script', 'style', 'nav', 'footer', 'header']):
+            element.decompose()
+        
+        # Find the main content
+        article = soup.find('article') or soup.find('main') or soup.find('div', class_='post-content')
+        
+        if article:
+            # Extract text from paragraphs
+            paragraphs = article.find_all('p')
+            content = ' '.join([p.get_text().strip() for p in paragraphs])
+            
+            # Clean up the text
+            content = re.sub(r'\s+', ' ', content)  # Remove extra whitespace
+            content = content.strip()
+            
+            return content
+        else:
+            return None
+            
+    except Exception as e:
+        print(f"Error extracting content: {str(e)}")
+        return None
+
 # Streamlit app layout
 st.set_page_config(
     page_title="Copycheck",
@@ -336,7 +375,25 @@ with col2:
     st.markdown("Analyze and improve your copywriting with AI-powered insights")
 
 # User inputs
-user_input = st.text_area('Enter your text to analyze:', height=200)
+text_tab, url_tab = st.tabs(["Text Input", "URL Input"])
+
+with text_tab:
+    user_input = st.text_area('Enter your text to analyze:', height=200)
+    
+with url_tab:
+    url_input = st.text_input('Enter the URL of the article to analyze:')
+    if url_input:
+        if not validators.url(url_input):
+            st.error('Please enter a valid URL.')
+        else:
+            with st.spinner('Extracting article content...'):
+                content = extract_article_content(url_input)
+                if content:
+                    user_input = content
+                    st.success('Article content extracted successfully!')
+                else:
+                    st.error('Could not extract article content. Please try copying and pasting the text directly.')
+
 email = st.text_input('Enter your email to receive the analysis:')
 
 # Analyze button
