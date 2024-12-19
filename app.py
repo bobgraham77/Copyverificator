@@ -125,27 +125,19 @@ def get_improvement_summary(scores):
 def display_score_bar(score, title, suggestions):
     color = get_score_color(score)
     
-    # Create columns for layout
-    col1, col2 = st.columns([1, 4])
-    
-    with col1:
-        # Create circular progress indicator
-        fig, ax = plt.subplots(figsize=(2, 2))
-        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6'))
-        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=color, 
-                              alpha=score/10))
-        ax.text(0.5, 0.5, f'{score}', ha='center', va='center', 
-               fontsize=20, fontweight='bold')
-        ax.set_xlim(0, 1)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-        st.pyplot(fig)
-        plt.close()
-    
-    with col2:
-        st.markdown(f"### {title}")
-        st.progress(score/10)
-        st.markdown(f"_{suggestions}_")
+    # Create a container for the score bar
+    container = st.container()
+    with container:
+        # Display the score bar and title
+        col1, col2 = st.columns([8, 2])
+        with col1:
+            st.progress(score / 10)
+        with col2:
+            st.markdown(f"<p style='text-align: right; color: {color};'>{score}/10</p>", unsafe_allow_html=True)
+        
+        # Display the title and suggestions
+        st.markdown(f"**{title}**")
+        st.markdown(suggestions)
 
 # Function to create PDF report
 def create_pdf_report(text, scores, suggestions, final_comment):
@@ -369,62 +361,6 @@ def extract_article_content(url):
         print(f"Error extracting content: {str(e)}")
         return None
 
-# Function to display results
-def display_results(scores, suggestions, final_comment):
-    # Calculate total score
-    total_score = sum(scores.values())
-    
-    # Create columns for layout
-    col1, col2 = st.columns([1, 3])
-    
-    # Display circular score in first column
-    with col1:
-        # Reduce the size of the circular graph
-        st.markdown(
-            f'''
-            <div class="score-circle" style="width: 120px; height: 120px;">
-                <svg viewBox="0 0 36 36">
-                    <path d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="#eee"
-                        stroke-width="3"
-                        stroke-dasharray="100, 100"/>
-                    <path d="M18 2.0845
-                        a 15.9155 15.9155 0 0 1 0 31.831
-                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="{get_score_color(total_score)}"
-                        stroke-width="3"
-                        stroke-dasharray="{total_score}, 100"/>
-                    <text x="18" y="20.35" 
-                        font-family="Verdana" 
-                        font-size="8" 
-                        fill="{get_score_color(total_score)}"
-                        text-anchor="middle">
-                        {total_score}%
-                    </text>
-                </svg>
-            </div>
-            ''',
-            unsafe_allow_html=True
-        )
-    
-    # Display detailed scores and suggestions in second column
-    with col2:
-        for criterion, score in scores.items():
-            with st.expander(f"{criterion}: {score}/10"):
-                st.write(suggestions[criterion])
-    
-    # Display improvement summary
-    st.markdown("### Areas for Improvement")
-    st.write(get_improvement_summary(scores))
-    
-    # Display final comment
-    st.markdown("### Overall Assessment")
-    st.write(final_comment)
-
 # Streamlit app layout
 st.set_page_config(
     page_title="Copycheck",
@@ -503,12 +439,58 @@ if st.button('Analyze', type='primary'):
                 if not scores:
                     st.error("Sorry, there was an error analyzing your text. Please try again.")
                 else:
-                    # Calculate total score and get final comment
-                    total_score = sum(scores.values())
-                    final_comment = get_final_comment(total_score)
+                    # Calculate average score for overall progress
+                    average_score = sum(scores.values()) / len(scores) if scores else 0
                     
-                    # Display results using the new function
-                    display_results(scores, suggestions, final_comment)
+                    # Display overall score with improved styling
+                    st.markdown('<div class="overall-score">', unsafe_allow_html=True)
+                    st.markdown("### Overall Score")
+                    
+                    # Create smaller circular progress indicator
+                    st.markdown(
+                        f'''
+                        <div class="score-circle" style="width: 120px; height: 120px;">
+                            <svg viewBox="0 0 36 36">
+                                <path d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="#eee"
+                                    stroke-width="3"
+                                    stroke-dasharray="100, 100"/>
+                                <path d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="{get_score_color(average_score * 10)}"
+                                    stroke-width="3"
+                                    stroke-dasharray="{average_score * 10}, 100"/>
+                                <text x="18" y="20.35" 
+                                    font-family="Verdana" 
+                                    font-size="8" 
+                                    fill="{get_score_color(average_score * 10)}"
+                                    text-anchor="middle">
+                                    {average_score:.1f}/10
+                                </text>
+                            </svg>
+                        </div>
+                        ''',
+                        unsafe_allow_html=True
+                    )
+                    st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    # Display individual scores with bars
+                    st.markdown("### Detailed Analysis")
+                    for title, score in scores.items():
+                        display_score_bar(score, title, suggestions[title])
+                    
+                    # Display improvement summary
+                    st.markdown("### Areas for Improvement")
+                    st.write(get_improvement_summary(scores))
+                    
+                    # Get and display final comment
+                    final_comment = get_final_comment(average_score)
+                    st.markdown(f"### Overall Assessment\n{final_comment}")
                     
                     # Generate and send PDF report
                     try:
