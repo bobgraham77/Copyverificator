@@ -129,7 +129,7 @@ def create_pdf_report(text, scores, suggestions, final_comment):
     # Add header with logo
     pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=20)
     pdf.set_font("Arial", "B", 24)
-    pdf.cell(0, 30, "Copywriting Analysis Report", ln=True, align="C")
+    pdf.cell(0, 30, "Copycheck Analysis Report", ln=True, align="C")
     
     # Add date
     pdf.set_font("Arial", "", 11)
@@ -181,19 +181,19 @@ def send_pdf_email(email, pdf_content, scores):
         params = {
             "from": sender_email,
             "to": email,
-            "subject": "Your Copywriting Analysis Report",
+            "subject": "Your Copycheck Analysis Report",
             "html": f"""
-                <h2>Your Copywriting Analysis Results</h2>
-                <p>Thank you for using our Copywriting Impact Checker!</p>
+                <h2>Your Copycheck Results</h2>
+                <p>Thank you for using Copycheck!</p>
                 <p>Your overall score is: {average_score:.1f}/10</p>
                 <p>A detailed analysis report is attached to this email.</p>
                 <p>Feel free to reach out if you have any questions.</p>
                 <br>
                 <p>Best regards,<br>
-                Copywriting Impact Checker Team</p>
+                Copycheck Team</p>
             """,
             "attachments": [{
-                "filename": "copywriting_analysis.pdf",
+                "filename": "copycheck_analysis.pdf",
                 "content": encoded_pdf,
                 "content_type": "application/pdf"
             }],
@@ -217,26 +217,27 @@ def send_pdf_email(email, pdf_content, scores):
         return False
 
 # Streamlit app layout
-col1, col2 = st.columns([1, 4])
+st.set_page_config(
+    page_title="Copycheck",
+    page_icon="✍️",
+    layout="wide"
+)
 
-with col1:
-    st.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", width=100)
-with col2:
-    st.title('Copywriting Impact Checker')
-
-# Custom CSS for the button
+# Custom CSS
 st.markdown("""
-<style>
-    .stButton>button {
-        background-color: #0066cc;
-        color: white;
+    <style>
+    .main {
+        padding: 2rem;
     }
-    .stButton>button:hover {
-        background-color: #0052a3;
-        color: white;
+    .stTextInput > div > div > input {
+        padding: 1rem;
     }
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """, unsafe_allow_html=True)
+
+# Header
+st.title("✍️ Copycheck")
+st.markdown("Analyze and improve your copywriting with AI-powered insights")
 
 # User input
 user_input = st.text_area('Enter your text or URL here:')

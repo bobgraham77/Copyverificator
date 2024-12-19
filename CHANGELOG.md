@@ -1,87 +1,20 @@
 # Changelog
 ## [Unreleased] - 2024-12-19
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated CHANGELOG.md
-All notable changes to the Copywriting Impact Checker will be documented in this file.
-
-## [Unreleased] - 2024-12-19
 
 ### Modified
 - Updated .file_hashes.json
 - Updated CHANGELOG.md
+- Updated README.md
 - Updated app.py
-- Updated requirements.txt
+All notable changes to Copycheck will be documented in this file.
+
+## [1.3.0] - 2024-12-19
+
+### Changed
+- Renamed application from "Copywriting Impact Checker" to "Copycheck"
+- Updated UI with new branding
+- Improved email templates with new branding
+- Updated documentation with new name
 
 ## [1.2.0] - 2024-12-19
 
@@ -118,44 +51,27 @@ All notable changes to the Copywriting Impact Checker will be documented in this
 ## [1.0.1] - 2024-12-18
 
 ### Added
-- Automatic changelog update system using Git pre-commit hook
-- Git repository initialization for version control
-- New development tools and scripts:
-  - `update_changelog.py` (deprecated in favor of Git hook)
-  - `.git/hooks/pre-commit` for automatic changelog updates
-
-### Enhanced
-- Improved score consistency with temperature reduction (0.1) and fixed seed
-- Enhanced button design with subtle checkmark and green hover/active states
-- Standardized blue color for final assessment text
-- Increased token limit (2048) for complete analysis results
+- Logo and branding elements
+- Improved error handling
+- Better user feedback messages
 
 ### Fixed
-- Score parsing algorithm for better accuracy
-- Text truncation issues in analysis results
-- Color contrast issues in the UI
+- Minor UI layout issues
+- Text analysis response formatting
 
 ## [1.0.0] - 2024-12-18
 
 ### Added
-- Initial release of the Copywriting Impact Checker
-- Integration with Groq API for text analysis
-- Modern UI with Streamlit framework
-- 10 copywriting criteria evaluation:
-  - Empathy (Understanding the audience)
-  - Clarity (Clear and concise message)
-  - Attention (Powerful headlines/hooks)
-  - Flow (Logical structure)
-  - Benefits (Focus on benefits)
-  - Action (Strong call to action)
-  - Trust (Credibility and authority)
-  - Emotion (Storytelling)
-  - Adaptation (Optimized for the medium)
-  - Influence (Persuasion)
-- Interactive score visualization with:
-  - Circular progress chart
-  - Individual score bars for each criterion
-  - Color-coded scores (green, yellow, orange, red)
+- Initial release
+- Basic text analysis functionality using Groq API
+- Score display for multiple criteria:
+  - Understanding the audience (Empathy)
+  - Clarity and conciseness
+  - Power words and persuasion
+  - Logical flow
+  - Focus on benefits
+  - Strong call-to-action
+  - Credibility elements
 - Detailed improvement suggestions for each criterion
 - Multi-language support (English, Spanish, French)
 - Overall score calculation and final assessment

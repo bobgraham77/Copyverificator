@@ -1,38 +1,33 @@
-# Copywriting Impact Checker
+# Copycheck 
 
-A powerful tool that analyzes and scores your copywriting based on 10 essential criteria. Get instant feedback and suggestions to improve your writing's effectiveness.
+An AI-powered copywriting analysis tool that helps you improve your marketing content.
 
 ## Features
 
-- **Comprehensive Analysis**: Evaluates your text across 10 key copywriting criteria:
-  - Empathy (Understanding the audience)
-  - Clarity (Clear and concise message)
-  - Attention (Powerful headlines/hooks)
-  - Flow (Logical structure)
-  - Benefits (Focus on benefits)
-  - Action (Strong call to action)
-  - Trust (Credibility and authority)
-  - Emotion (Storytelling)
-  - Adaptation (Optimized for the medium)
-  - Influence (Persuasion)
+- Instant AI analysis of your copy
+- Detailed scoring across multiple criteria
+- Specific improvement suggestions
+- PDF report generation
+- Automatic email delivery of reports
 
-- **Visual Feedback**:
-  - Interactive circular progress chart
-  - Color-coded score bars
-  - Detailed improvement suggestions
-  - Overall effectiveness rating
+## How it Works
 
-- **Multi-language Support**:
-  - English
-  - Spanish
-  - French
+1. Enter your marketing copy
+2. Provide your email
+3. Get instant analysis and a detailed PDF report
 
-## Installation
+## Technology Stack
+
+- Streamlit for the web interface
+- Groq AI for text analysis
+- Resend for email delivery
+- FPDF for PDF generation
+
+## Setup
 
 1. Clone the repository:
 ```bash
-git clone [your-repository-url]
-cd copyverificator
+git clone https://github.com/yourusername/copycheck.git
 ```
 
 2. Install dependencies:
@@ -40,56 +35,25 @@ cd copyverificator
 pip install -r requirements.txt
 ```
 
-3. Create a `secrets.toml` file in the project root with your Groq API key:
+3. Set up your environment variables in `.streamlit/secrets.toml`:
 ```toml
 [groq]
-api_key = "your-api-key-here"
+api_key = "your-groq-api-key"
+
+[resend]
+api_key = "your-resend-api-key"
+sender_email = "your-verified-email@domain.com"
 ```
 
-## Usage
-
-1. Start the application:
+4. Run the app:
 ```bash
 streamlit run app.py
 ```
 
-2. Enter your text in the input area
-3. Select your language
-4. Click "Analyze" to get your results
+## Contributing
 
-## Score Interpretation
-
-- **Green** (8-10): Excellent performance
-- **Yellow** (6-7.9): Good performance with room for improvement
-- **Orange** (4-5.9): Needs significant improvement
-- **Red** (0-3.9): Requires major revision
-
-## Development
-
-The project uses:
-- Streamlit for the web interface
-- Groq API for text analysis
-- Matplotlib for data visualization
-- Git hooks for automatic changelog updates
-
-### Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes (changelog will update automatically)
-4. Push to the branch
-5. Create a Pull Request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-MIT
-
-## Author
-
-Bob Pressoir
-
-## Acknowledgments
-
-- Groq for their powerful LLM API
-- Streamlit for the amazing web framework
-- All contributors and users of this tool
+This project is licensed under the MIT License - see the LICENSE file for details.
