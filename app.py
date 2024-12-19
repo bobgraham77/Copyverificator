@@ -375,25 +375,7 @@ with col2:
     st.markdown("Analyze and improve your copywriting with AI-powered insights")
 
 # User inputs
-text_tab, url_tab = st.tabs(["Text Input", "URL Input"])
-
-with text_tab:
-    user_input = st.text_area('Enter your text to analyze:', height=200)
-    
-with url_tab:
-    url_input = st.text_input('Enter the URL of the article to analyze:')
-    if url_input:
-        if not validators.url(url_input):
-            st.error('Please enter a valid URL.')
-        else:
-            with st.spinner('Extracting article content...'):
-                content = extract_article_content(url_input)
-                if content:
-                    user_input = content
-                    st.success('Article content extracted successfully!')
-                else:
-                    st.error('Could not extract article content. Please try copying and pasting the text directly.')
-
+user_input = st.text_area('Enter your text or URL to analyze:', height=200)
 email = st.text_input('Enter your email to receive the analysis:')
 
 # Analyze button
@@ -402,6 +384,16 @@ if st.button('Analyze', type='primary'):
         if not email or not validators.email(email):
             st.error('Please enter a valid email address to receive your analysis.')
         else:
+            # Check if input is URL
+            if validators.url(user_input):
+                with st.spinner('Extracting article content...'):
+                    content = extract_article_content(user_input)
+                    if content:
+                        user_input = content
+                    else:
+                        st.error('Could not extract article content. Please try copying and pasting the text directly.')
+                        st.stop()
+            
             with st.spinner('Analyzing your text...'):
                 analysis_result = analyze_text(user_input)
                 scores, suggestions = parse_analysis_result(analysis_result)
