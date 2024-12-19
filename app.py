@@ -192,24 +192,28 @@ def send_pdf_email(email, pdf_content, scores):
                 <p>Best regards,<br>
                 Copywriting Impact Checker Team</p>
             """,
-            "attachments": [
-                {
-                    "filename": "copywriting_analysis.pdf",
-                    "content": encoded_pdf,
-                }
-            ],
-            "tags": [
-                {"name": "audience", "value": "Copycheck"},
-                {"name": "score", "value": str(round(average_score, 1))},
-                {"name": "type", "value": "analysis_report"}
-            ]
+            "attachments": [{
+                "filename": "copywriting_analysis.pdf",
+                "content": encoded_pdf,
+                "content_type": "application/pdf"
+            }],
+            "headers": {
+                "X-Entity-Ref-ID": "copycheck"
+            },
+            "categories": ["Copycheck"]
         }
         
-        # Send email
-        response = resend.Emails.send(params)
-        return True if response and response.get('id') else False
+        try:
+            # Send email
+            response = resend.Emails.send(params)
+            print(f"Email sent successfully: {response}")
+            return True if response and response.get('id') else False
+        except Exception as send_error:
+            print(f"Error sending email via Resend: {send_error}")
+            return False
+            
     except Exception as e:
-        print(f"Error sending email: {e}")
+        print(f"Error preparing email: {e}")
         return False
 
 # Streamlit app layout
