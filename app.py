@@ -29,17 +29,17 @@ groq_client = Groq(api_key=groq_api_key)
 # Function to analyze text based on copywriting criteria
 def analyze_text(text):
     """Analyze text based on copywriting criteria"""
-    response = ""
     try:
         logging.debug("Starting analysis...")
         
-        # Truncate text if it's too long (Groq has a context window limit)
-        max_text_length = 12000  # Adjust based on model's context window
+        # Truncate text if it's too long
+        max_text_length = 12000
         if len(text) > max_text_length:
             text = text[:max_text_length] + "..."
             logging.warning(f"Text truncated to {max_text_length} characters")
         
-        for chunk in groq_client.chat.completions.create(
+        # Use non-streaming API call
+        completion = groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {
@@ -54,24 +54,23 @@ def analyze_text(text):
             temperature=0.1,
             max_tokens=2048,
             top_p=1,
-            stream=True,
+            stream=False,
             stop=None,
             seed=42
-        ):
-            if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
-                response += chunk.choices[0].delta.content
-                logging.debug("Received and processed chunk from API")
+        )
         
+        response = completion.choices[0].message.content
         logging.debug("Analysis complete")
-        if not response.strip():
+        
+        if not response or not response.strip():
             raise Exception("Empty response received from API")
+            
+        return response
             
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        st.error(f"An error occurred during analysis. Please try again or contact support if the issue persists.")
+        st.error("Une erreur s'est produite lors de l'analyse. Veuillez réessayer ou contacter le support si le problème persiste.")
         return None
-    
-    return response
 
 # Function to get score color
 def get_score_color(score):
