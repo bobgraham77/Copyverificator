@@ -4,6 +4,10 @@ import numpy as np
 from groq import Groq
 import re
 import time
+from fpdf import FPDF
+import validators
+import base64
+from datetime import datetime
 
 # Load API key from Streamlit secrets
 api_key = st.secrets["groq"]["api_key"]
@@ -100,6 +104,49 @@ def get_final_comment(score):
     else:
         return "Significant revision recommended"
 
+# Function to create PDF report
+def create_pdf_report(text, scores, suggestions, final_comment):
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Add header with logo
+    pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=30)
+    pdf.set_font("Arial", "B", 20)
+    pdf.cell(0, 30, "Copywriting Analysis Report", ln=True, align="C")
+    
+    # Add date
+    pdf.set_font("Arial", "", 12)
+    pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
+    
+    # Add analyzed text
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, "Analyzed Text:", ln=True)
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 10, text)
+    
+    # Add scores and suggestions
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, "Analysis Results:", ln=True)
+    
+    for title, score in scores.items():
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, f"{title}: {score}/10", ln=True)
+        pdf.set_font("Arial", "", 12)
+        pdf.multi_cell(0, 10, suggestions[title])
+    
+    # Add final comment
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, "Overall Assessment:", ln=True)
+    pdf.set_font("Arial", "", 12)
+    pdf.multi_cell(0, 10, final_comment)
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+# Function to generate download button
+def download_button(binary_content, filename):
+    b64 = base64.b64encode(binary_content).decode()
+    return f'<a href="data:application/pdf;base64,{b64}" download="{filename}">Download PDF Report</a>'
+
 # Streamlit app layout
 col1, col2 = st.columns([1, 4])
 
@@ -110,88 +157,62 @@ with col2:
 
 # Custom CSS for the button
 st.markdown("""
-    <style>
-    .stButton > button {
-        position: relative;
-        padding-right: 35px;  /* Space for the checkmark */
+<style>
+    .stButton>button {
+        background-color: #0066cc;
+        color: white;
     }
-    .stButton > button:hover {
-        border-color: #00CC96 !important;
-        color: #00CC96 !important;
+    .download-btn {
+        display: inline-block;
+        padding: 0.5em 1em;
+        background-color: #0066cc;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        margin: 10px 0;
     }
-    .stButton > button:active {
-        background-color: #00CC96 !important;
-        color: white !important;
-        border-color: #00CC96 !important;
+    .download-btn:hover {
+        background-color: #0052a3;
+        color: white;
     }
-    .stButton > button::after {
-        content: "✓";
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    </style>
+</style>
 """, unsafe_allow_html=True)
 
-# Text input
+# User input
 user_input = st.text_area('Enter your text or URL here:')
 
 # Language selection
 language = st.selectbox('Select the language of the text to analyze:', ['English', 'Spanish', 'French'])
 
+# Email input
+email = st.text_input('Enter your email to receive a detailed PDF report:', key='email')
+
 # Analyze button with simple check mark
 if st.button('Analyze'):
     if user_input:
-        analysis_result = analyze_text(user_input)
-        
-        # Overall score calculation
-        criteria_scores, criteria_suggestions = parse_analysis_result(analysis_result)
-        overall_score = np.mean(list(criteria_scores.values())) * 10  # Scale to 100
-        
-        # Get and display final comment
-        final_comment = get_final_comment(overall_score)
-        st.markdown(f'## Copywriting Final Result: <span style="color: #0068C9;">{final_comment}</span>', unsafe_allow_html=True)
-        
-        # Display circular chart at the top
-        fig, ax = plt.subplots(figsize=(3, 3))
-        
-        # Get color based on overall score (scaled back to 0-10)
-        color = get_score_color(overall_score / 10)
-        
-        # Ensure positive values for pie chart
-        score_value = max(0, min(overall_score, 100))  # Clamp between 0 and 100
-        remaining = max(0, 100 - score_value)
-        
-        # Create the pie chart with only score and remaining
-        wedges, _ = ax.pie([score_value, remaining], 
-                          colors=[color, '#f0f0f0'],  # Using light gray for remaining
-                          startangle=90,
-                          counterclock=False,  # Make it go clockwise
-                          labels=['', ''])  # Remove labels
-        
-        # Add the percentage text in the center
-        ax.text(0, 0, f'{score_value:.0f}%', 
-                ha='center', 
-                va='center',
-                fontsize=20,
-                fontweight='bold')
-        
-        # Make the plot circular
-        ax.axis('equal')
-        
-        # Remove the frame
-        ax.set_frame_on(False)
-        
-        # Add some padding around the plot
-        plt.tight_layout(pad=1.5)
-        
-        # Display the plot
-        st.pyplot(fig)
-        
-        # Display score bars for each criterion
-        for criterion, score in criteria_scores.items():
-            suggestions = criteria_suggestions.get(criterion, "No specific suggestions available.")
-            display_score_bar(score, criterion.split(': ')[1], suggestions)
+        if not email or not validators.email(email):
+            st.error('Please enter a valid email address to receive your analysis.')
+        else:
+            with st.spinner('Analyzing your text...'):
+                analysis_result = analyze_text(user_input)
+                scores, suggestions = parse_analysis_result(analysis_result)
+                
+                # Display results
+                for title, score in scores.items():
+                    display_score_bar(score, title, suggestions[title])
+                
+                # Get and display final comment
+                final_comment = get_final_comment(sum(scores.values()) / len(scores))
+                st.markdown(f"### Overall Assessment\n{final_comment}")
+                
+                # Generate PDF report
+                pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
+                st.markdown(download_button(pdf_content, "copywriting_analysis.pdf"), unsafe_allow_html=True)
+                
+                # Success message
+                st.success('Analysis complete! Download your detailed report above.')
+                
+                # Store email (you might want to add this to a database in the future)
+                st.session_state['user_email'] = email
     else:
-        st.warning('Please enter some text or a URL to analyze.')
+        st.warning('Please enter some text to analyze.')

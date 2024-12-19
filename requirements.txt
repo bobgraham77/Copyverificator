@@ -3,3 +3,5 @@ matplotlib==3.10.0
 numpy==2.2.0
 groq==0.13.1
 toml==0.10.2
+fpdf2==2.7.8
+validators==0.22.0
