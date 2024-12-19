@@ -175,7 +175,7 @@ def send_pdf_email(email, pdf_content, scores):
         encoded_pdf = base64.b64encode(pdf_content).decode()
         
         # Calculate average score
-        average_score = sum(scores.values()) / len(scores)
+        average_score = sum(scores.values()) / len(scores) if scores else 0
         
         # Create email with attachment
         params = {
@@ -197,6 +197,11 @@ def send_pdf_email(email, pdf_content, scores):
                     "filename": "copywriting_analysis.pdf",
                     "content": encoded_pdf,
                 }
+            ],
+            "tags": [
+                {"name": "audience", "value": "Copycheck"},
+                {"name": "score", "value": str(round(average_score, 1))},
+                {"name": "type", "value": "analysis_report"}
             ]
         }
         
