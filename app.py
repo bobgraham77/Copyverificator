@@ -293,27 +293,54 @@ def parse_analysis_result(result):
     try:
         # Ensure we have a valid result
         if not result or not isinstance(result, str):
+            logging.error("Invalid result format")
             return {}, {}
             
-        # Try to find JSON in the response
-        json_match = re.search(r'\{.*\}', result, re.DOTALL)
-        if not json_match:
-            return {}, {}
-            
-        data = eval(json_match.group())
-        if not isinstance(data, dict):
-            return {}, {}
-            
-        scores = data.get('scores', {})
-        suggestions = data.get('suggestions', {})
+        scores = {}
+        suggestions = {}
+        
+        # Parse the text response
+        sections = result.split('\n\n')
+        current_criterion = None
+        
+        for section in sections:
+            # Look for criterion headers
+            if ':' in section:
+                lines = section.strip().split('\n')
+                for line in lines:
+                    if 'Score:' in line:
+                        # Extract score
+                        try:
+                            score_str = line.split('Score:')[1].strip()
+                            score = int(score_str.split('/')[0])
+                            if current_criterion:
+                                scores[current_criterion] = score
+                        except:
+                            continue
+                    elif 'Improvement:' in line:
+                        # Extract improvement suggestion
+                        suggestion = line.split('Improvement:')[1].strip()
+                        if current_criterion:
+                            suggestions[current_criterion] = suggestion
+                    else:
+                        # Try to identify criterion
+                        for criterion in ['Empathy', 'Clarity', 'Attention', 'Flow', 'Benefits', 
+                                       'Action', 'Trust', 'Emotion', 'Adaptation', 'Influence']:
+                            if criterion in line:
+                                current_criterion = criterion
+                                break
         
         # Validate scores
-        if not scores or not all(isinstance(v, (int, float)) for v in scores.values()):
+        if not scores or len(scores) == 0:
+            logging.error("No scores found in response")
             return {}, {}
             
+        logging.debug(f"Parsed scores: {scores}")
+        logging.debug(f"Parsed suggestions: {suggestions}")
+        
         return scores, suggestions
     except Exception as e:
-        print(f"Error parsing analysis result: {e}")
+        logging.error(f"Error parsing analysis result: {e}")
         return {}, {}
 
 # Function to get final comment
