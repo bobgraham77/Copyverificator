@@ -1,5 +1,9 @@
 # Changelog
 ## [Unreleased] - 2024-12-19
+## [Unreleased] - 2024-12-19
+
+### Modified
+- Updated requirements.txt
 
 ### Modified
 - Updated .file_hashes.json
