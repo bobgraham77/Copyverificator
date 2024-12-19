@@ -3,6 +3,16 @@
 ## [Unreleased] - 2024-12-19
 
 ### Modified
+- Updated .streamlit/config.toml
+## [Unreleased] - 2024-12-19
+
+
+## [Unreleased] - 2024-12-19
+
+### Modified
+- Updated config.toml
+
+### Modified
 - Updated app.py
 ## [Unreleased] - 2024-12-19
 
