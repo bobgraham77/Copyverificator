@@ -2,7 +2,6 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from groq import Groq
-from groq.exceptions import RateLimitError
 import re
 import time
 from fpdf import FPDF
@@ -10,14 +9,17 @@ from fpdf.enums import XPos, YPos
 import validators
 import base64
 from datetime import datetime
-import resend
 import requests
 import json
 from bs4 import BeautifulSoup
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 # Load API keys from Streamlit secrets
 groq_api_key = st.secrets["groq"]["api_key"]
-resend.api_key = st.secrets["resend"]["api_key"]
+resend_api_key = st.secrets["resend"]["api_key"]
 sender_email = st.secrets["resend"]["sender_email"]
 audience_id = st.secrets["resend"]["audience_id"]
 
@@ -29,6 +31,7 @@ def analyze_text(text):
     """Analyze text based on copywriting criteria"""
     response = ""
     try:
+        logging.debug("Starting analysis...")
         for chunk in groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
@@ -48,10 +51,13 @@ def analyze_text(text):
             stop=None,
             seed=42
         ):
+            logging.debug("Received chunk from API")
             if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
                 response += chunk.choices[0].delta.content
-    except RateLimitError as e:
-        st.error(f"Rate limit exceeded: {e}")
+        logging.debug("Analysis complete")
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        st.error(f"An error occurred: {e}")
         return None
     
     return response
@@ -160,7 +166,7 @@ def add_to_audience(email):
         
         # Request headers
         headers = {
-            "Authorization": f"Bearer {resend.api_key}",
+            "Authorization": f"Bearer {resend_api_key}",
             "Content-Type": "application/json"
         }
         
@@ -237,7 +243,7 @@ def send_pdf_email(email, pdf_content, scores):
         
         try:
             # Send email
-            response = resend.Emails.send(params)
+            response = requests.post("https://api.resend.com/emails", headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"}, json=params)
             print(f"Email sent successfully: {response}")
             return True if response and response.get('id') else False
         except Exception as send_error:
