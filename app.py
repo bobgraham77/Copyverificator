@@ -438,37 +438,18 @@ st.set_page_config(
 st.markdown("""
     <style>
     .main {
-        padding: 2rem;
-    }
-    .stTextInput > div > div > input {
         padding: 1rem;
     }
     .stProgress > div > div > div {
         height: 20px;
         border-radius: 10px;
     }
-    .overall-score {
-        text-align: center;
-        padding: 2rem;
-        background-color: #f8f9fa;
-        border-radius: 15px;
-        margin-bottom: 2rem;
-    }
-    .score-circle {
-        margin: auto;
-        width: 150px;
-        height: 150px;
-    }
     </style>
     """, unsafe_allow_html=True)
 
-# Header with logo
-col1, col2 = st.columns([1, 5])
-with col1:
-    st.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", width=100)
-with col2:
-    st.title("Copycheck")
-    st.markdown("Analyze and improve your copywriting with AI-powered insights")
+# Header
+st.title("✍️ Copycheck")
+st.markdown("Analyze and improve your copywriting with AI-powered insights")
 
 # User inputs
 user_input = st.text_area('Enter your text or URL to analyze:', height=200)
@@ -499,71 +480,53 @@ if st.button('Analyze', type='primary'):
                 # Check if we got valid scores
                 if not scores:
                     st.error("Sorry, there was an error analyzing your text. Please try again.")
-                else:
-                    # Calculate average score for overall progress
-                    average_score = sum(scores.values()) / len(scores) if scores else 0
-                    
-                    # Display overall score with improved styling
-                    col1, col2 = st.columns([1, 3])
-                    
-                    with col1:
-                        st.markdown("### Overall Score")
-                        # Create smaller circular progress indicator
-                        st.markdown(
-                            f'''
-                            <div class="score-circle" style="width: 120px; height: 120px;">
-                                <svg viewBox="0 0 36 36">
-                                    <path d="M18 2.0845
-                                        a 15.9155 15.9155 0 0 1 0 31.831
-                                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none"
-                                        stroke="#eee"
-                                        stroke-width="3"
-                                        stroke-dasharray="100, 100"/>
-                                    <path d="M18 2.0845
-                                        a 15.9155 15.9155 0 0 1 0 31.831
-                                        a 15.9155 15.9155 0 0 1 0 -31.831"
-                                        fill="none"
-                                        stroke="{get_score_color(average_score * 10)}"
-                                        stroke-width="3"
-                                        stroke-dasharray="{average_score * 10}, 100"/>
-                                    <text x="18" y="20.35" 
-                                        font-family="Verdana" 
-                                        font-size="8" 
-                                        fill="{get_score_color(average_score * 10)}"
-                                        text-anchor="middle">
-                                        {average_score:.1f}/10
-                                    </text>
-                                </svg>
-                            </div>
-                            ''',
-                            unsafe_allow_html=True
-                        )
-                    
-                    with col2:
-                        # Get and display final comment
-                        final_comment = get_final_comment(average_score)
-                        st.markdown("### Areas for Improvement")
-                        st.write(final_comment)
-                    
-                    # Display improvement summary
+                    st.stop()
+                
+                # Calculate average score
+                average_score = sum(scores.values()) / len(scores)
+                
+                # Display results
+                st.markdown("## Analysis Results")
+                
+                # Create two columns for layout
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    # Display overall score
+                    st.markdown("### Overall Score")
+                    fig, ax = plt.subplots(figsize=(3, 3))
+                    ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6'))
+                    ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=get_score_color(average_score), 
+                                          alpha=average_score/10))
+                    ax.text(0.5, 0.5, f'{int(average_score*10)}%', ha='center', va='center', 
+                           fontsize=24, fontweight='bold')
+                    ax.set_xlim(0, 1)
+                    ax.set_ylim(0, 1)
+                    ax.axis('off')
+                    st.pyplot(fig)
+                    plt.close()
+                
+                with col2:
+                    # Areas for improvement
                     st.markdown("### Areas for Improvement")
                     st.write(get_improvement_summary(scores))
-                    
-                    # Display individual scores with bars
-                    st.markdown("### Detailed Analysis")
-                    for title, score in scores.items():
-                        display_score_bar(score, title, suggestions[title])
-                    
-                    # Generate and send PDF report
-                    try:
-                        with st.spinner('Generating and sending PDF report...'):
-                            pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
-                            if send_pdf_email(email, pdf_content, scores):
-                                st.success('Analysis complete! Check your email for the detailed report.')
-                            else:
-                                st.error('There was an issue sending the email. Please try again.')
-                    except Exception as e:
-                        st.error(f'Error sending email: {str(e)}')
+                
+                # Display individual scores
+                st.markdown("## Detailed Analysis")
+                for criterion, score in scores.items():
+                    display_score_bar(score, criterion, suggestions.get(criterion, ""))
+                
+                # Create and send PDF report
+                with st.spinner('Generating PDF report...'):
+                    pdf_content = create_pdf_report(user_input, scores, suggestions, get_improvement_summary(scores))
+                    if pdf_content:
+                        if send_pdf_email(email, pdf_content, scores):
+                            st.success('Analysis complete! Check your email for the detailed report.')
+                        else:
+                            st.error('There was an issue sending the email. Please try again.')
+                            st.stop()
+                    else:
+                        st.error('There was an issue generating the PDF report. Please try again.')
+                        st.stop()
     else:
-        st.warning('Please enter some text to analyze.')
+        st.error('Please enter some text to analyze.')
