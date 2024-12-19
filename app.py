@@ -224,34 +224,32 @@ def add_to_audience(email):
         
         # Request payload
         payload = {
-            "contacts": [{
-                "email": email,
-                "first_name": "",
-                "last_name": "",
-                "data": {
-                    "source": "copycheck_app",
-                    "signup_date": datetime.now().isoformat()
-                }
-            }]
+            "email": email,
+            "first_name": "",
+            "last_name": "",
+            "data": {
+                "source": "copycheck_app",
+                "signup_date": datetime.now().isoformat()
+            }
         }
         
         # Make the POST request
         response = requests.post(url, headers=headers, json=payload)
         
         # Log response for debugging
-        print(f"Resend API Response Status: {response.status_code}")
-        print(f"Resend API Response Body: {response.text}")
+        logging.debug(f"Resend API Response Status: {response.status_code}")
+        logging.debug(f"Resend API Response Body: {response.text}")
         
         # Check if request was successful
         if response.status_code in [200, 201]:
-            print(f"Successfully added {email} to audience {audience_id}")
+            logging.info(f"Successfully added {email} to audience {audience_id}")
             return True
         else:
-            print(f"Failed to add contact. Status code: {response.status_code}")
+            logging.error(f"Failed to add contact. Status code: {response.status_code}")
             return False
             
     except Exception as e:
-        print(f"Error adding to audience: {str(e)}")
+        logging.error(f"Error adding to audience: {str(e)}")
         return False
 
 # Function to send PDF email
@@ -270,7 +268,7 @@ def send_pdf_email(email, pdf_content, scores):
         # Create email with attachment
         params = {
             "from": sender_email,
-            "to": email,
+            "to": [email],
             "subject": "Your Copycheck Analysis Report",
             "html": f"""
                 <h2>Your Copycheck Results</h2>
@@ -284,26 +282,35 @@ def send_pdf_email(email, pdf_content, scores):
             """,
             "attachments": [{
                 "filename": "copycheck_analysis.pdf",
-                "content": encoded_pdf,
-                "content_type": "application/pdf"
-            }],
-            "headers": {
-                "X-Entity-Ref-ID": "copycheck"
-            },
-            "categories": ["Copycheck"]
+                "content": encoded_pdf
+            }]
         }
         
         try:
             # Send email
-            response = requests.post("https://api.resend.com/emails", headers={"Authorization": f"Bearer {resend_api_key}", "Content-Type": "application/json"}, json=params)
-            print(f"Email sent successfully: {response}")
-            return True if response and response.get('id') else False
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json=params
+            )
+            
+            if response.status_code in [200, 201]:
+                logging.info("Email sent successfully")
+                return True
+            else:
+                logging.error(f"Failed to send email. Status: {response.status_code}, Response: {response.text}")
+                raise Exception(f"Failed to send email: {response.text}")
+                
         except Exception as send_error:
-            print(f"Error sending email via Resend: {send_error}")
-            return False
+            logging.error(f"Error sending email via Resend: {send_error}")
+            raise Exception(f"Error sending email: {str(send_error)}")
             
     except Exception as e:
-        print(f"Error preparing email: {e}")
+        logging.error(f"Error preparing email: {e}")
+        st.error(f"There was an issue sending the email. Please try again: {str(e)}")
         return False
 
 # Function to parse analysis result
