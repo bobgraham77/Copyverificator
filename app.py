@@ -136,11 +136,16 @@ def display_score_bar(score, title, suggestions):
     with col1:
         # Create circular progress indicator
         fig, ax = plt.subplots(figsize=(2, 2))
-        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6'))
-        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=color, 
-                              alpha=score/10))
-        ax.text(0.5, 0.5, f'{int(score*10)}%', ha='center', va='center', 
-               fontsize=16, fontweight='bold')
+        # Outer circle (background)
+        ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6', zorder=1))
+        # Progress arc
+        theta = np.linspace(0, 2*np.pi*(score/10), 50)
+        x = 0.5 + 0.4*np.cos(theta)
+        y = 0.5 + 0.4*np.sin(theta)
+        ax.plot(x, y, color=color, linewidth=8, zorder=2)
+        # Score text
+        ax.text(0.5, 0.5, f'{score:.1f}', ha='center', va='center', 
+               fontsize=20, fontweight='bold', zorder=3)
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.axis('off')
@@ -163,9 +168,9 @@ def create_pdf_report(text, scores, suggestions, final_comment):
         # Set default font
         pdf.set_font('helvetica', size=12)
         
-        # Add title with pen emoji
+        # Add title
         pdf.set_font('helvetica', 'B', 24)
-        pdf.cell(0, 20, '✍️ Copycheck Analysis Report', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(0, 20, 'Copycheck Analysis Report', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         pdf.ln(10)
         
         # Add date
@@ -195,7 +200,7 @@ def create_pdf_report(text, scores, suggestions, final_comment):
         
         for criterion, score in scores.items():
             pdf.set_font('helvetica', 'B', 12)
-            pdf.cell(0, 10, f'{criterion}: {int(score*10)}%', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.cell(0, 10, f'{criterion}: {score:.1f}/10', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
             pdf.set_font('helvetica', 'I', 12)
             if criterion in suggestions:
                 pdf.multi_cell(0, 10, f'Suggestion: {suggestions[criterion]}')
@@ -448,7 +453,8 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # Header
-st.title("✍️ Copycheck")
+st.title("Copycheck")
+st.write("✍️")
 st.markdown("Analyze and improve your copywriting with AI-powered insights")
 
 # User inputs
@@ -495,11 +501,16 @@ if st.button('Analyze', type='primary'):
                     # Display overall score
                     st.markdown("### Overall Score")
                     fig, ax = plt.subplots(figsize=(3, 3))
-                    ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6'))
-                    ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color=get_score_color(average_score), 
-                                          alpha=average_score/10))
+                    # Outer circle (background)
+                    ax.add_patch(plt.Circle((0.5, 0.5), 0.4, color='#f0f2f6', zorder=1))
+                    # Progress arc
+                    theta = np.linspace(0, 2*np.pi*(average_score/10), 50)
+                    x = 0.5 + 0.4*np.cos(theta)
+                    y = 0.5 + 0.4*np.sin(theta)
+                    ax.plot(x, y, color=get_score_color(average_score), linewidth=8, zorder=2)
+                    # Score text
                     ax.text(0.5, 0.5, f'{int(average_score*10)}%', ha='center', va='center', 
-                           fontsize=24, fontweight='bold')
+                           fontsize=24, fontweight='bold', zorder=3)
                     ax.set_xlim(0, 1)
                     ax.set_ylim(0, 1)
                     ax.axis('off')
