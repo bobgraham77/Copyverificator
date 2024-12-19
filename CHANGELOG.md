@@ -1,299 +1,49 @@
 # Changelog
 ## [Unreleased] - 2024-12-19
-## [Unreleased] - 2024-12-19
 
 ### Modified
-- Updated .file_hashes.json
 - Updated CHANGELOG.md
-- Updated app.py
-- Updated requirements.txt
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated .file_hashes.json
-- Updated CHANGELOG.md
-- Updated app.py
-- Updated requirements.txt
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated .file_hashes.json
-- Updated CHANGELOG.md
-- Updated NEXT_ACTIONS.md
-- Updated app.py
-- Updated requirements.txt
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated NEXT_ACTIONS.md
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated NEXT_ACTIONS.md
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated NEXT_ACTIONS.md
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated NEXT_ACTIONS.md
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated NEXT_ACTIONS.md
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated .file_hashes.json
-- Updated CHANGELOG.md
-- Updated app.py
-- Updated requirements.txt
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated assets/copy_checker.svg
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated .file_hashes.json
-- Updated CHANGELOG.md
-- Updated app.py
-- Updated assets/logo.svg
-- Updated changelog_watcher_error.log
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated .streamlit/config.toml
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated config.toml
-
-### Modified
-- Updated app.py
-## [Unreleased] - 2024-12-19
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-### Modified
-- Updated requirements.txt
-
-### Modified
-- Updated .file_hashes.json
-- Updated .gitignore
-- Updated .streamlit/config.toml
-- Updated CHANGELOG.md
-- Updated NEXT_ACTIONS.md
-- Updated README.md
-- Updated app.py
-- Updated changelog_watcher.log
-- Updated changelog_watcher_error.log
-- Updated requirements.txt
-- Updated test_consistency.py
-- Updated ~/Library/LaunchAgents/com.copyverificator.changelog.plist
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated config.toml
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated app.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated watchmedo.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated __init__.py
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated README.md
-
-
-## [Unreleased] - 2024-12-19
-
-### Modified
-- Updated README.md
-
-
-## [Unreleased] - 2024-12-18
-
-### Modified
-- Updated README.md
-
 All notable changes to the Copywriting Impact Checker will be documented in this file.
+
+## [Unreleased] - 2024-12-19
+
+### Modified
+- Updated .file_hashes.json
+- Updated CHANGELOG.md
+- Updated app.py
+- Updated requirements.txt
+
+## [1.2.0] - 2024-12-19
+
+### Added
+- Automatic email delivery of PDF reports using Resend
+- Professional HTML email template with score summary
+- Improved PDF report formatting with better spacing and readability
+- Automatic email collection through Resend dashboard
+
+### Changed
+- Replaced download button with automatic email delivery
+- Updated PDF layout with better typography and spacing
+- Improved error handling for email sending
+- Simplified dependencies in requirements.txt
+
+### Fixed
+- PDF encoding issues that caused display problems
+- Dependency conflicts with numpy and streamlit versions
+- Issues with PDF truncation in the report
+
+## [1.1.0] - 2024-12-19
+
+### Added
+- Email capture functionality
+- PDF report generation with detailed analysis
+- Custom logo integration
+- Progress bars for score visualization
+
+### Changed
+- Updated UI layout with two-column design
+- Enhanced error messages and user feedback
+- Improved text analysis prompts
 
 ## [1.0.1] - 2024-12-18
 
