@@ -8,6 +8,9 @@ from fpdf import FPDF
 import validators
 import base64
 from datetime import datetime
+import csv
+import os
+import pandas as pd
 
 # Load API key from Streamlit secrets
 api_key = st.secrets["groq"]["api_key"]
@@ -151,6 +154,47 @@ def create_pdf_report(text, scores, suggestions, final_comment):
     
     return pdf.output(dest='S')
 
+# Function to save email to CSV
+def save_email_to_csv(email, scores):
+    """Save email and analysis data to CSV file"""
+    csv_file = "collected_emails.csv"
+    average_score = sum(scores.values()) / len(scores)
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Prepare the data
+    data = {
+        'email': email,
+        'submission_date': current_time,
+        'average_score': f"{average_score:.1f}/10",
+        'engagement_score': f"{scores.get('Understanding the audience: Empathy', 0):.1f}/10",
+        'clarity_score': f"{scores.get('Clear and concise message: Clarity', 0):.1f}/10"
+    }
+    
+    # Check if file exists
+    file_exists = os.path.isfile(csv_file)
+    
+    # Write to CSV
+    with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=data.keys())
+        
+        # Write header only if file is new
+        if not file_exists:
+            writer.writeheader()
+        
+        writer.writerow(data)
+    
+    return True
+
+# Function to get email stats
+def get_email_stats():
+    """Get statistics about collected emails"""
+    if os.path.isfile("collected_emails.csv"):
+        df = pd.read_csv("collected_emails.csv")
+        total_emails = len(df)
+        today_emails = len(df[df['submission_date'].str.startswith(datetime.now().strftime('%Y-%m-%d'))])
+        return total_emails, today_emails
+    return 0, 0
+
 # Streamlit app layout
 col1, col2 = st.columns([1, 4])
 
@@ -158,6 +202,26 @@ with col1:
     st.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", width=100)
 with col2:
     st.title('Copywriting Impact Checker')
+
+# Add email stats in sidebar
+total_emails, today_emails = get_email_stats()
+with st.sidebar:
+    st.markdown("### Email Collection Stats")
+    st.markdown(f"Total emails collected: **{total_emails}**")
+    st.markdown(f"Emails collected today: **{today_emails}**")
+    
+    if st.button("Download Email List"):
+        if os.path.isfile("collected_emails.csv"):
+            with open("collected_emails.csv", 'r', encoding='utf-8') as file:
+                csv_data = file.read()
+                st.download_button(
+                    label="📥 Download Email Database (CSV)",
+                    data=csv_data,
+                    file_name="copywriting_emails.csv",
+                    mime="text/csv",
+                )
+        else:
+            st.warning("No emails collected yet.")
 
 # Custom CSS for the button
 st.markdown("""
@@ -191,6 +255,9 @@ if st.button('Analyze'):
             with st.spinner('Analyzing your text...'):
                 analysis_result = analyze_text(user_input)
                 scores, suggestions = parse_analysis_result(analysis_result)
+                
+                # Save email to CSV
+                save_email_to_csv(email, scores)
                 
                 # Display results
                 for title, score in scores.items():

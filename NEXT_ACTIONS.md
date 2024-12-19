@@ -2,6 +2,7 @@
 
 ## High Priority
 1. **Save Analysis History**
+   - Add automtatic email notification with beautiful report
    - Implement local storage for analysis results
    - Add ability to compare multiple versions of the same text
    - Create an export function for analysis results (PDF/CSV)
