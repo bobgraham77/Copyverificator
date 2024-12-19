@@ -77,43 +77,48 @@ def display_score_bar(score, title, suggestions):
     st.markdown(suggestions)
 
 # Function to parse analysis result
-def parse_analysis_result(analysis_result):
-    criteria_scores = {}
-    criteria_suggestions = {}
-    
-    # Split the analysis into sections
-    sections = analysis_result.split('###')
-    
-    for section in sections:
-        if not section.strip():
-            continue
+def parse_analysis_result(result):
+    """Parse the analysis result and extract scores and suggestions"""
+    try:
+        # Ensure we have a valid result
+        if not result or not isinstance(result, str):
+            return {}, {}
             
-        # Extract criterion name
-        criterion = section.split('\n')[0].strip()
+        # Try to find JSON in the response
+        json_match = re.search(r'\{.*\}', result, re.DOTALL)
+        if not json_match:
+            return {}, {}
+            
+        data = eval(json_match.group())
+        if not isinstance(data, dict):
+            return {}, {}
+            
+        scores = data.get('scores', {})
+        suggestions = data.get('suggestions', {})
         
-        # Extract score (now looking for just the number after "Score: ")
-        score_match = re.search(r'Score: (\d+)', section)
-        if score_match:
-            score = int(score_match.group(1))
-            criteria_scores[criterion] = score
+        # Validate scores
+        if not scores or not all(isinstance(v, (int, float)) for v in scores.values()):
+            return {}, {}
             
-        # Extract improvements
-        improvements_match = re.search(r'Improvements?: (.*?)(?=(?:\n###|\Z))', section, re.DOTALL)
-        if improvements_match:
-            criteria_suggestions[criterion] = improvements_match.group(1).strip()
-    
-    return criteria_scores, criteria_suggestions
+        return scores, suggestions
+    except Exception as e:
+        print(f"Error parsing analysis result: {e}")
+        return {}, {}
 
 # Function to get final comment
-def get_final_comment(score):
-    if score > 80:
-        return "Excellent! Your copy is highly effective"
-    elif score > 60:
-        return "Good work! Some room for improvement"
-    elif score > 40:
-        return "Needs improvement to be more effective"
+def get_final_comment(average_score):
+    """Get final assessment comment based on average score"""
+    if not isinstance(average_score, (int, float)) or average_score < 0:
+        return "Unable to calculate score. Please try again."
+        
+    if average_score >= 9:
+        return "Excellent! Your copy is highly effective and persuasive."
+    elif average_score >= 7:
+        return "Very good! Your copy is effective with some room for improvement."
+    elif average_score >= 5:
+        return "Good start. Your copy needs some work to be more effective."
     else:
-        return "Significant revision recommended"
+        return "Your copy needs significant improvement. Consider implementing the suggestions above."
 
 # Function to create PDF report
 def create_pdf_report(text, scores, suggestions, final_comment):
@@ -243,21 +248,28 @@ if st.button('Analyze'):
                 analysis_result = analyze_text(user_input)
                 scores, suggestions = parse_analysis_result(analysis_result)
                 
-                # Display results
-                for title, score in scores.items():
-                    display_score_bar(score, title, suggestions[title])
-                
-                # Get and display final comment
-                final_comment = get_final_comment(sum(scores.values()) / len(scores))
-                st.markdown(f"### Overall Assessment\n{final_comment}")
-                
-                # Generate PDF report
-                pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
-                
-                # Send PDF via email
-                if send_pdf_email(email, pdf_content, scores):
-                    st.success('Analysis complete! Check your email for the detailed report.')
+                # Check if we got valid scores
+                if not scores:
+                    st.error("Sorry, there was an error analyzing your text. Please try again.")
                 else:
-                    st.error('There was an issue sending the email. Please try again.')
+                    # Display results
+                    for title, score in scores.items():
+                        display_score_bar(score, title, suggestions[title])
+                    
+                    # Calculate average score safely
+                    average_score = sum(scores.values()) / len(scores) if scores else 0
+                    
+                    # Get and display final comment
+                    final_comment = get_final_comment(average_score)
+                    st.markdown(f"### Overall Assessment\n{final_comment}")
+                    
+                    # Generate PDF report
+                    pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
+                    
+                    # Send PDF via email
+                    if send_pdf_email(email, pdf_content, scores):
+                        st.success('Analysis complete! Check your email for the detailed report.')
+                    else:
+                        st.error('There was an issue sending the email. Please try again.')
     else:
         st.warning('Please enter some text to analyze.')
