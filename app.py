@@ -46,7 +46,7 @@ def analyze_text(text):
         stop=None,
         seed=42
     ):
-        if hasattr(chunk.choices[0].delta, 'content'):
+        if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
             response += chunk.choices[0].delta.content
     
     return response
