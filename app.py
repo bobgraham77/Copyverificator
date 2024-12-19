@@ -15,7 +15,10 @@ from bs4 import BeautifulSoup
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s - %(message)s'
+)
 
 # Load API keys from Streamlit secrets
 try:
