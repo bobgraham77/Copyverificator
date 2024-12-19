@@ -32,12 +32,19 @@ def analyze_text(text):
     response = ""
     try:
         logging.debug("Starting analysis...")
+        
+        # Truncate text if it's too long (Groq has a context window limit)
+        max_text_length = 12000  # Adjust based on model's context window
+        if len(text) > max_text_length:
+            text = text[:max_text_length] + "..."
+            logging.warning(f"Text truncated to {max_text_length} characters")
+        
         for chunk in groq_client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "system",
-                    "content": "Evaluate the submitted article on a scale of 100 points by taking into account the following 10 copywriting criteria, where each criterion is worth 10 points. Explain for each criterion why you assigned the score given and propose improvements for better copywriting.\nUnderstanding the audience: Empathy\nClear and concise message: Clarity\nPowerful headlines/hooks: Attention\nLogical structure: Flow\nFocus on benefits: Benefits\nStrong call to action: Action\nCredibility and authority: Trust\nStorytelling: Emotion\nOptimized for the medium: Adaptation\nPersuasion: Influence\nSteps\nRead the article carefully to get an overall understanding of its content and purpose.\nEvaluate Each Criterion:\nFor each of the 10 criteria, assess how well the article performs.\nConsider specific examples from the article that support your evaluation.\nProvide Scores: Assign a score out of 10 for each criterion.\nExplain the Scores: For each criterion, explain why you gave that score with specific details.\nSuggest Improvements: Offer constructive feedback on how to improve the article in each criterion area.\nOutput Format\nYour output should be structured with headings for each criterion followed by:\nScore: The score out of 10\nReasoning: Detailed explanation of why this score was given\nImprovements: Suggestions for enhancing the copywriting based on the current evaluation\nBe extremely consistent with your scoring. For the same text, you should always give exactly the same scores.\nNever deviate from your initial assessment of a piece of text.\nBe precise and methodical in your scoring approach.\nUse objective criteria whenever possible.\nKeep explanations and improvements concise but complete."
+                    "content": "Evaluate the article on 10 copywriting criteria (10 points each):\n1. Empathy (audience understanding)\n2. Clarity (clear message)\n3. Attention (headlines/hooks)\n4. Flow (structure)\n5. Benefits (value focus)\n6. Action (call-to-action)\n7. Trust (credibility)\n8. Emotion (storytelling)\n9. Adaptation (medium fit)\n10. Influence (persuasion)\n\nFor each criterion provide:\nScore: X/10\nReasoning: Brief explanation\nImprovement: One key suggestion"
                 },
                 {
                     "role": "user",
@@ -51,13 +58,17 @@ def analyze_text(text):
             stop=None,
             seed=42
         ):
-            logging.debug("Received chunk from API")
             if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
                 response += chunk.choices[0].delta.content
+                logging.debug("Received and processed chunk from API")
+        
         logging.debug("Analysis complete")
+        if not response.strip():
+            raise Exception("Empty response received from API")
+            
     except Exception as e:
         logging.error(f"An error occurred: {e}")
-        st.error(f"An error occurred: {e}")
+        st.error(f"An error occurred during analysis. Please try again or contact support if the issue persists.")
         return None
     
     return response
