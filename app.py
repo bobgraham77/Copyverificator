@@ -107,45 +107,75 @@ def get_final_comment(score):
 # Function to create PDF report
 def create_pdf_report(text, scores, suggestions, final_comment):
     pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
     # Add header with logo
-    pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=30)
-    pdf.set_font("Arial", "B", 20)
+    pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=20)
+    pdf.set_font("Arial", "B", 24)
     pdf.cell(0, 30, "Copywriting Analysis Report", ln=True, align="C")
     
     # Add date
-    pdf.set_font("Arial", "", 12)
+    pdf.set_font("Arial", "", 11)
     pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=True)
     
     # Add analyzed text
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "Analyzed Text:", ln=True)
-    pdf.set_font("Arial", "", 12)
-    pdf.multi_cell(0, 10, text)
+    pdf.set_font("Arial", "", 11)
+    pdf.multi_cell(0, 7, text)
+    
+    # Add some spacing
+    pdf.ln(10)
     
     # Add scores and suggestions
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, "Analysis Results:", ln=True)
-    
     for title, score in scores.items():
+        # Score header with colored background
+        pdf.set_fill_color(240, 240, 240)
         pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, f"{title}: {score}/10", ln=True)
-        pdf.set_font("Arial", "", 12)
-        pdf.multi_cell(0, 10, suggestions[title])
+        score_text = f"{title}: {score}/10"
+        pdf.cell(0, 10, score_text, ln=True, fill=True)
+        
+        # Add suggestions with proper spacing and formatting
+        pdf.set_font("Arial", "", 11)
+        pdf.ln(2)
+        pdf.multi_cell(0, 7, suggestions[title])
+        pdf.ln(5)
     
     # Add final comment
+    pdf.add_page()
     pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "Overall Assessment:", ln=True)
-    pdf.set_font("Arial", "", 12)
-    pdf.multi_cell(0, 10, final_comment)
+    pdf.set_font("Arial", "", 11)
+    pdf.multi_cell(0, 7, final_comment)
     
     return pdf.output(dest='S')
 
 # Function to generate download button
 def download_button(binary_content, filename):
     b64 = base64.b64encode(binary_content).decode()
-    return f'<a href="data:application/pdf;base64,{b64}" download="{filename}">Download PDF Report</a>'
+    return f'''
+        <a href="data:application/pdf;base64,{b64}" 
+           download="{filename}"
+           style="
+                display: inline-block;
+                padding: 0.5em 1em;
+                color: white;
+                background-color: #0066cc;
+                border-radius: 4px;
+                text-decoration: none;
+                font-weight: bold;
+                margin: 10px 0;
+                border: none;
+                cursor: pointer;
+                transition: background-color 0.3s ease;
+           "
+           onmouseover="this.style.backgroundColor='#0052a3'"
+           onmouseout="this.style.backgroundColor='#0066cc'"
+        >
+            📥 Download Analysis Report (PDF)
+        </a>
+    '''
 
 # Streamlit app layout
 col1, col2 = st.columns([1, 4])
