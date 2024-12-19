@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from groq import Groq
+from groq.exceptions import RateLimitError
 import re
 import time
 from fpdf import FPDF
@@ -27,27 +28,31 @@ groq_client = Groq(api_key=groq_api_key)
 def analyze_text(text):
     """Analyze text based on copywriting criteria"""
     response = ""
-    for chunk in groq_client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[
-            {
-                "role": "system",
-                "content": "Evaluate the submitted article on a scale of 100 points by taking into account the following 10 copywriting criteria, where each criterion is worth 10 points. Explain for each criterion why you assigned the score given and propose improvements for better copywriting.\nUnderstanding the audience: Empathy\nClear and concise message: Clarity\nPowerful headlines/hooks: Attention\nLogical structure: Flow\nFocus on benefits: Benefits\nStrong call to action: Action\nCredibility and authority: Trust\nStorytelling: Emotion\nOptimized for the medium: Adaptation\nPersuasion: Influence\nSteps\nRead the article carefully to get an overall understanding of its content and purpose.\nEvaluate Each Criterion:\nFor each of the 10 criteria, assess how well the article performs.\nConsider specific examples from the article that support your evaluation.\nProvide Scores: Assign a score out of 10 for each criterion.\nExplain the Scores: For each criterion, explain why you gave that score with specific details.\nSuggest Improvements: Offer constructive feedback on how to improve the article in each criterion area.\nOutput Format\nYour output should be structured with headings for each criterion followed by:\nScore: The score out of 10\nReasoning: Detailed explanation of why this score was given\nImprovements: Suggestions for enhancing the copywriting based on the current evaluation\nBe extremely consistent with your scoring. For the same text, you should always give exactly the same scores.\nNever deviate from your initial assessment of a piece of text.\nBe precise and methodical in your scoring approach.\nUse objective criteria whenever possible.\nKeep explanations and improvements concise but complete."
-            },
-            {
-                "role": "user",
-                "content": text
-            }
-        ],
-        temperature=0.1,
-        max_tokens=2048,
-        top_p=1,
-        stream=True,
-        stop=None,
-        seed=42
-    ):
-        if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
-            response += chunk.choices[0].delta.content
+    try:
+        for chunk in groq_client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "Evaluate the submitted article on a scale of 100 points by taking into account the following 10 copywriting criteria, where each criterion is worth 10 points. Explain for each criterion why you assigned the score given and propose improvements for better copywriting.\nUnderstanding the audience: Empathy\nClear and concise message: Clarity\nPowerful headlines/hooks: Attention\nLogical structure: Flow\nFocus on benefits: Benefits\nStrong call to action: Action\nCredibility and authority: Trust\nStorytelling: Emotion\nOptimized for the medium: Adaptation\nPersuasion: Influence\nSteps\nRead the article carefully to get an overall understanding of its content and purpose.\nEvaluate Each Criterion:\nFor each of the 10 criteria, assess how well the article performs.\nConsider specific examples from the article that support your evaluation.\nProvide Scores: Assign a score out of 10 for each criterion.\nExplain the Scores: For each criterion, explain why you gave that score with specific details.\nSuggest Improvements: Offer constructive feedback on how to improve the article in each criterion area.\nOutput Format\nYour output should be structured with headings for each criterion followed by:\nScore: The score out of 10\nReasoning: Detailed explanation of why this score was given\nImprovements: Suggestions for enhancing the copywriting based on the current evaluation\nBe extremely consistent with your scoring. For the same text, you should always give exactly the same scores.\nNever deviate from your initial assessment of a piece of text.\nBe precise and methodical in your scoring approach.\nUse objective criteria whenever possible.\nKeep explanations and improvements concise but complete."
+                },
+                {
+                    "role": "user",
+                    "content": text
+                }
+            ],
+            temperature=0.1,
+            max_tokens=2048,
+            top_p=1,
+            stream=True,
+            stop=None,
+            seed=42
+        ):
+            if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content is not None:
+                response += chunk.choices[0].delta.content
+    except RateLimitError as e:
+        st.error(f"Rate limit exceeded: {e}")
+        return None
     
     return response
 
@@ -390,6 +395,8 @@ if st.button('Analyze', type='primary'):
             
             with st.spinner('Analyzing your text...'):
                 analysis_result = analyze_text(user_input)
+                if analysis_result is None:
+                    st.stop()
                 scores, suggestions = parse_analysis_result(analysis_result)
                 
                 # Check if we got valid scores
