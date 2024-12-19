@@ -8,14 +8,12 @@ from fpdf import FPDF
 import validators
 import base64
 from datetime import datetime
-import csv
-import os
-import pandas as pd
+import resend
 
-# Load API key from Streamlit secrets
+# Load API keys from Streamlit secrets
 api_key = st.secrets["groq"]["api_key"]
-
-client = Groq(api_key=api_key)
+resend.api_key = st.secrets["resend"]["api_key"]
+sender_email = st.secrets["resend"]["sender_email"]
 
 # Function to analyze text based on copywriting criteria
 def analyze_text(text):
@@ -154,40 +152,44 @@ def create_pdf_report(text, scores, suggestions, final_comment):
     
     return pdf.output(dest='S')
 
-# Function to save email to CSV
-def save_email_to_csv(email, scores):
-    """Save email and analysis data to Google Sheets"""
+# Function to send PDF email
+def send_pdf_email(email, pdf_content, scores):
+    """Send PDF report via email using Resend"""
     try:
-        # Get the current emails from session state
-        if 'collected_emails' not in st.session_state:
-            st.session_state['collected_emails'] = []
+        # Encode PDF in base64
+        encoded_pdf = base64.b64encode(pdf_content).decode()
         
+        # Calculate average score
         average_score = sum(scores.values()) / len(scores)
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        # Prepare the data
-        email_data = {
-            'email': email,
-            'submission_date': current_time,
-            'average_score': f"{average_score:.1f}/10",
-            'engagement_score': f"{scores.get('Understanding the audience: Empathy', 0):.1f}/10",
-            'clarity_score': f"{scores.get('Clear and concise message: Clarity', 0):.1f}/10"
+        # Create email with attachment
+        params = {
+            "from": sender_email,
+            "to": email,
+            "subject": "Your Copywriting Analysis Report",
+            "html": f"""
+                <h2>Your Copywriting Analysis Results</h2>
+                <p>Thank you for using our Copywriting Impact Checker!</p>
+                <p>Your overall score is: {average_score:.1f}/10</p>
+                <p>A detailed analysis report is attached to this email.</p>
+                <p>Feel free to reach out if you have any questions.</p>
+                <br>
+                <p>Best regards,<br>
+                Copywriting Impact Checker Team</p>
+            """,
+            "attachments": [
+                {
+                    "filename": "copywriting_analysis.pdf",
+                    "content": encoded_pdf,
+                }
+            ]
         }
         
-        # Add to session state
-        st.session_state['collected_emails'].append(email_data)
-        
-        # Save to secrets (only visible to you in Streamlit Cloud)
-        if 'admin' in st.secrets and st.secrets.admin.password == "YOUR_ADMIN_PASSWORD":
-            emails_data = "\n".join([
-                f"{data['email']},{data['submission_date']},{data['average_score']},{data['engagement_score']},{data['clarity_score']}"
-                for data in st.session_state['collected_emails']
-            ])
-            st.secrets['collected_emails'] = emails_data
-        
-        return True
+        # Send email
+        response = resend.Emails.send(params)
+        return True if response and response.get('id') else False
     except Exception as e:
-        print(f"Error saving email: {e}")
+        print(f"Error sending email: {e}")
         return False
 
 # Streamlit app layout
@@ -231,9 +233,6 @@ if st.button('Analyze'):
                 analysis_result = analyze_text(user_input)
                 scores, suggestions = parse_analysis_result(analysis_result)
                 
-                # Save email to CSV
-                save_email_to_csv(email, scores)
-                
                 # Display results
                 for title, score in scores.items():
                     display_score_bar(score, title, suggestions[title])
@@ -245,21 +244,10 @@ if st.button('Analyze'):
                 # Generate PDF report
                 pdf_content = create_pdf_report(user_input, scores, suggestions, final_comment)
                 
-                # Convert bytearray to bytes for download
-                pdf_bytes = bytes(pdf_content)
-                
-                # Use Streamlit's native download button
-                st.download_button(
-                    label="📥 Download Analysis Report (PDF)",
-                    data=pdf_bytes,
-                    file_name="copywriting_analysis.pdf",
-                    mime="application/pdf",
-                )
-                
-                # Success message
-                st.success('Analysis complete! Click the button above to download your detailed report.')
-                
-                # Store email (you might want to add this to a database in the future)
-                st.session_state['user_email'] = email
+                # Send PDF via email
+                if send_pdf_email(email, pdf_content, scores):
+                    st.success('Analysis complete! Check your email for the detailed report.')
+                else:
+                    st.error('There was an issue sending the email. Please try again.')
     else:
         st.warning('Please enter some text to analyze.')
