@@ -11,35 +11,45 @@ from datetime import datetime
 import resend
 
 # Load API keys from Streamlit secrets
-api_key = st.secrets["groq"]["api_key"]
+groq_api_key = st.secrets["groq"]["api_key"]
 resend.api_key = st.secrets["resend"]["api_key"]
 sender_email = st.secrets["resend"]["sender_email"]
 
+# Initialize Groq client
+groq_client = Groq(api_key=groq_api_key)
+
 # Function to analyze text based on copywriting criteria
 def analyze_text(text):
-    completion = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+    """Analyze text based on copywriting criteria"""
+    completion = groq_client.chat.completions.create(
         messages=[
             {
                 "role": "system",
-                "content": "Evaluate the submitted article on a scale of 100 points by taking into account the following 10 copywriting criteria, where each criterion is worth 10 points. Explain for each criterion why you assigned the score given and propose improvements for better copywriting.\nUnderstanding the audience: Empathy\nClear and concise message: Clarity\nPowerful headlines/hooks: Attention\nLogical structure: Flow\nFocus on benefits: Benefits\nStrong call to action: Action\nCredibility and authority: Trust\nStorytelling: Emotion\nOptimized for the medium: Adaptation\nPersuasion: Influence\nSteps\nRead the article carefully to get an overall understanding of its content and purpose.\nEvaluate Each Criterion:\nFor each of the 10 criteria, assess how well the article performs.\nConsider specific examples from the article that support your evaluation.\nProvide Scores: Assign a score out of 10 for each criterion.\nExplain the Scores: For each criterion, explain why you gave that score with specific details.\nSuggest Improvements: Offer constructive feedback on how to improve the article in each criterion area.\nOutput Format\nYour output should be structured with headings for each criterion followed by:\nScore: The score out of 10\nReasoning: Detailed explanation of why this score was given\nImprovements: Suggestions for enhancing the copywriting based on the current evaluation\nBe extremely consistent with your scoring. For the same text, you should always give exactly the same scores.\nNever deviate from your initial assessment of a piece of text.\nBe precise and methodical in your scoring approach.\nUse objective criteria whenever possible.\nKeep explanations and improvements concise but complete."
+                "content": """You are a professional copywriting analyzer. Evaluate the given text based on these criteria:
+                1. Understanding the audience: Empathy
+                2. Clear and concise message: Clarity
+                3. Power words and persuasion
+                4. Logical flow
+                5. Focus on benefits
+                6. Strong call-to-action
+                7. Credibility elements
+
+                For each criterion:
+                1. Give a score out of 10
+                2. Provide specific suggestions for improvement
+                Format your response as JSON with 'scores' and 'suggestions' objects."""
             },
             {
                 "role": "user",
                 "content": text
             }
         ],
-        temperature=0.1,
-        max_tokens=2048,
-        top_p=1,
-        stream=True,
-        stop=None,
-        seed=42
+        model="mixtral-8x7b-32768",
+        temperature=0.5,
+        max_tokens=1000,
     )
-    analysis_result = ""
-    for chunk in completion:
-        analysis_result += chunk.choices[0].delta.content or ""
-    return analysis_result
+    
+    return completion.choices[0].message.content
 
 # Function to get score color
 def get_score_color(score):
