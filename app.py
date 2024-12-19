@@ -5,6 +5,7 @@ from groq import Groq
 import re
 import time
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 import validators
 import base64
 from datetime import datetime
@@ -133,40 +134,43 @@ def display_score_bar(score, title, suggestions):
 
 # Function to create PDF report
 def create_pdf_report(text, scores, suggestions, final_comment):
+    """Create a PDF report with the analysis results"""
     pdf = FPDF()
     pdf.add_page()
     
-    # Add header with logo
-    pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=20)
-    pdf.set_font("Arial", "B", 24)
-    pdf.cell(0, 30, "Copycheck Analysis Report", ln=True, align="C")
+    # Add DejaVu Sans as a Unicode font
+    pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
     
-    # Add date
-    pdf.set_font("Arial", "", 11)
-    pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
+    # Header with logo
+    pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=30)
+    pdf.set_font('DejaVu', '', 24)
+    pdf.set_xy(50, 15)
+    pdf.cell(0, 10, "Copycheck Analysis Report")
     
-    # Add original text
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, "Analyzed Text:", ln=True)
-    pdf.set_font("Arial", "", 11)
-    pdf.multi_cell(0, 10, text)
+    # Original text
+    pdf.set_font('DejaVu', '', 12)
+    pdf.set_xy(10, 40)
+    pdf.multi_cell(0, 10, "Original Text:")
+    pdf.set_font('DejaVu', '', 11)
+    pdf.set_xy(10, 50)
+    pdf.multi_cell(0, 10, text[:500] + "..." if len(text) > 500 else text)
     
-    # Add scores and suggestions
-    pdf.add_page()
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, "Analysis Results:", ln=True)
+    # Scores and suggestions
+    pdf.set_xy(10, pdf.get_y() + 10)
+    pdf.set_font('DejaVu', 'B', 12)
+    pdf.cell(0, 10, "Analysis Results:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     
     for criterion, score in scores.items():
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, f"{criterion}: {score}/10", ln=True)
-        pdf.set_font("Arial", "", 11)
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.cell(0, 10, f"{criterion}: {score}/10", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.set_font('DejaVu', '', 11)
         pdf.multi_cell(0, 10, suggestions[criterion])
-        pdf.ln(5)
+        pdf.set_y(pdf.get_y() + 5)
     
-    # Add final comment
-    pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, "Overall Assessment:", ln=True)
-    pdf.set_font("Arial", "", 11)
+    # Overall assessment
+    pdf.set_font('DejaVu', 'B', 12)
+    pdf.cell(0, 10, "Overall Assessment:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.set_font('DejaVu', '', 11)
     pdf.multi_cell(0, 10, final_comment)
     
     return pdf.output(dest='S')
