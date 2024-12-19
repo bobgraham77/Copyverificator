@@ -156,38 +156,39 @@ def create_pdf_report(text, scores, suggestions, final_comment):
 
 # Function to save email to CSV
 def save_email_to_csv(email, scores):
-    """Save email and analysis data to CSV file"""
-    # Use an absolute path in a secure location
-    csv_file = "data/collected_emails.csv"
-    average_score = sum(scores.values()) / len(scores)
-    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Prepare the data
-    data = {
-        'email': email,
-        'submission_date': current_time,
-        'average_score': f"{average_score:.1f}/10",
-        'engagement_score': f"{scores.get('Understanding the audience: Empathy', 0):.1f}/10",
-        'clarity_score': f"{scores.get('Clear and concise message: Clarity', 0):.1f}/10"
-    }
-    
-    # Ensure directory exists
-    os.makedirs(os.path.dirname(csv_file), exist_ok=True)
-    
-    # Check if file exists
-    file_exists = os.path.isfile(csv_file)
-    
-    # Write to CSV
-    with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.DictWriter(file, fieldnames=data.keys())
+    """Save email and analysis data to Google Sheets"""
+    try:
+        # Get the current emails from session state
+        if 'collected_emails' not in st.session_state:
+            st.session_state['collected_emails'] = []
         
-        # Write header only if file is new
-        if not file_exists:
-            writer.writeheader()
+        average_score = sum(scores.values()) / len(scores)
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        writer.writerow(data)
-    
-    return True
+        # Prepare the data
+        email_data = {
+            'email': email,
+            'submission_date': current_time,
+            'average_score': f"{average_score:.1f}/10",
+            'engagement_score': f"{scores.get('Understanding the audience: Empathy', 0):.1f}/10",
+            'clarity_score': f"{scores.get('Clear and concise message: Clarity', 0):.1f}/10"
+        }
+        
+        # Add to session state
+        st.session_state['collected_emails'].append(email_data)
+        
+        # Save to secrets (only visible to you in Streamlit Cloud)
+        if 'admin' in st.secrets and st.secrets.admin.password == "YOUR_ADMIN_PASSWORD":
+            emails_data = "\n".join([
+                f"{data['email']},{data['submission_date']},{data['average_score']},{data['engagement_score']},{data['clarity_score']}"
+                for data in st.session_state['collected_emails']
+            ])
+            st.secrets['collected_emails'] = emails_data
+        
+        return True
+    except Exception as e:
+        print(f"Error saving email: {e}")
+        return False
 
 # Streamlit app layout
 col1, col2 = st.columns([1, 4])
