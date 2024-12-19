@@ -101,7 +101,12 @@ def get_final_comment(score):
         return "Significant revision recommended"
 
 # Streamlit app layout
-st.title('Copywriting Impact Checker')
+col1, col2 = st.columns([1, 4])
+
+with col1:
+    st.image("assets/logo.png", width=100)
+with col2:
+    st.title('Copywriting Impact Checker')
 
 # Custom CSS for the button
 st.markdown("""
