@@ -150,45 +150,64 @@ def display_score_bar(score, title, suggestions):
 # Function to create PDF report
 def create_pdf_report(text, scores, suggestions, final_comment):
     """Create a PDF report with the analysis results"""
-    pdf = FPDF()
-    pdf.add_page()
-    
-    # Add DejaVu Sans as a Unicode font
-    pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-    
-    # Header with logo
-    pdf.image("https://raw.githubusercontent.com/bobgraham77/Copyverificator/main/assets/copy_checker.svg", x=10, y=10, w=30)
-    pdf.set_font('DejaVu', '', 24)
-    pdf.set_xy(50, 15)
-    pdf.cell(0, 10, "Copycheck Analysis Report")
-    
-    # Original text
-    pdf.set_font('DejaVu', '', 12)
-    pdf.set_xy(10, 40)
-    pdf.multi_cell(0, 10, "Original Text:")
-    pdf.set_font('DejaVu', '', 11)
-    pdf.set_xy(10, 50)
-    pdf.multi_cell(0, 10, text[:500] + "..." if len(text) > 500 else text)
-    
-    # Scores and suggestions
-    pdf.set_xy(10, pdf.get_y() + 10)
-    pdf.set_font('DejaVu', 'B', 12)
-    pdf.cell(0, 10, "Analysis Results:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    
-    for criterion, score in scores.items():
-        pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, f"{criterion}: {score}/10", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-        pdf.set_font('DejaVu', '', 11)
-        pdf.multi_cell(0, 10, suggestions[criterion])
-        pdf.set_y(pdf.get_y() + 5)
-    
-    # Overall assessment
-    pdf.set_font('DejaVu', 'B', 12)
-    pdf.cell(0, 10, "Overall Assessment:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
-    pdf.set_font('DejaVu', '', 11)
-    pdf.multi_cell(0, 10, final_comment)
-    
-    return pdf.output(dest='S')
+    try:
+        # Initialize PDF
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # Set default font
+        pdf.set_font('helvetica', size=12)
+        
+        # Add title
+        pdf.set_font('helvetica', 'B', 24)
+        pdf.cell(0, 20, 'Copycheck Analysis Report', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(10)
+        
+        # Add date
+        pdf.set_font('helvetica', 'I', 12)
+        pdf.cell(0, 10, f'Generated on {datetime.now().strftime("%Y-%m-%d %H:%M")}', align='C', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(20)
+        
+        # Add analyzed text
+        pdf.set_font('helvetica', 'B', 14)
+        pdf.cell(0, 10, 'Analyzed Text:', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(5)
+        pdf.set_font('helvetica', size=12)
+        pdf.multi_cell(0, 10, text[:500] + '...' if len(text) > 500 else text)
+        pdf.ln(10)
+        
+        # Add scores and suggestions
+        pdf.set_font('helvetica', 'B', 14)
+        pdf.cell(0, 10, 'Analysis Results:', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(10)
+        
+        # Calculate average score
+        average_score = sum(scores.values()) / len(scores) if scores else 0
+        
+        pdf.set_font('helvetica', 'B', 12)
+        pdf.cell(0, 10, f'Overall Score: {average_score:.1f}/10', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(10)
+        
+        for criterion, score in scores.items():
+            pdf.set_font('helvetica', 'B', 12)
+            pdf.cell(0, 10, f'{criterion}: {score}/10', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+            pdf.set_font('helvetica', 'I', 12)
+            if criterion in suggestions:
+                pdf.multi_cell(0, 10, f'Suggestion: {suggestions[criterion]}')
+            pdf.ln(5)
+        
+        # Add final comment
+        pdf.ln(10)
+        pdf.set_font('helvetica', 'B', 14)
+        pdf.cell(0, 10, 'Final Assessment:', new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.ln(5)
+        pdf.set_font('helvetica', size=12)
+        pdf.multi_cell(0, 10, final_comment)
+        
+        return pdf.output()
+    except Exception as e:
+        logging.error(f"Error creating PDF: {e}")
+        return None
 
 # Function to add to audience
 def add_to_audience(email):
